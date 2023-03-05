@@ -1,0 +1,15 @@
+---
+title: "Introduction and Motivation"
+description: |
+  Some additional details about the website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+# Introduction
+
+
+# Motivation of the project

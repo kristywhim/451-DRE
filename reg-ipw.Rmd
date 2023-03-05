@@ -1,0 +1,11 @@
+---
+title: "Outcome Regression and Inverse Probability Weighting"
+description: |
+  Some additional details about the website
+---
+
+# Pre DRE: Two common adjusting methods {#reg-ipw}
+
+## Outcome regression (REG)
+
+## Inverse Probability Weighting (IPW)

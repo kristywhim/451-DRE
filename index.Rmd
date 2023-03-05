@@ -1,0 +1,21 @@
+---
+title: "Causal Inference: Doubly Robust Estimator"
+description: |
+  Welcome to the website. This website introduces Doubly Robust Estimator (DRE) in causal inference. This is a class project from course STAT 451: Causal Inference at Macalester College. The contents in this blog are collaborative efforts from Kristy Ma and Xiang Li.
+site: distill::distill_website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Learn more about creating websites with Distill at:
+# https://rstudio.github.io/distill/website.html
+
+# Learn more about publishing to GitHub Pages at:
+# https://rstudio.github.io/distill/publish_website.html#github-pages
+
+```
+
+# Table of contents
+To start exploring, please simply navigate to tabs on the upper right corner. We will start by introducing causal inference and motivation behind this project, then diving into mathematical aspect of Doubly Robust Estimator (DRE), and ending up with a simply computation simulation study. Have fun!
+If you have any questions, please reach out to *yma1@macalester.edu* and *xli2@macalester.edu*. Thank you!

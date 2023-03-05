@@ -1,0 +1,9 @@
+---
+title: "Doubly Robust Estimator"
+description: |
+  Some additional details about the website
+---
+
+# DRE is a combined method from REG and IPW {#dre}
+
+

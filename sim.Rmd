@@ -1,0 +1,8 @@
+---
+title: "Simulation using DRE"
+description: |
+  Some additional details about the website
+---
+
+# Computational Simulation {#sim}
+

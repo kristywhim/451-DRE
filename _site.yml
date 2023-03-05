@@ -1,0 +1,20 @@
+name: "451-DRE"
+title: "Causal Inference: Doubly Robust Estimator"
+description: |
+  Causal Inference: Doubly Robust Estimator
+output_dir: "docs"
+navbar:
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "Intro"
+      href: about.html
+    - text: "Regression and IPW"
+      href: reg-ipw.html
+    - text: "Doubly Robust Estimator"
+      href: dre.html
+    - text: "Simulation!"
+      href: sim.html
+    - text: "Wrap-up"
+      href: wrapup.html
+output: distill::distill_article
