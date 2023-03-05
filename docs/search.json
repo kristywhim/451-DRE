@@ -6,13 +6,15 @@
       "description": "Some additional details about the website",
       "author": [],
       "contents": "\r\nIntroduction\r\nMotivation of the project\r\n\r\n\r\n\r\n",
-      "last_modified": "2023-03-05T15:18:43-06:00"
+      "last_modified": "2023-03-05T15:28:27-06:00"
     },
     {
       "path": "dre.html",
+      "title": "Doubly Robust Estimator",
+      "description": "Some additional details about the website",
       "author": [],
-      "contents": "\r\n\r\n\r\n\r\n",
-      "last_modified": "2023-03-05T15:18:43-06:00"
+      "contents": "\r\nDRE is a combined method from REG and IPW\r\n\r\n\r\n\r\n",
+      "last_modified": "2023-03-05T15:28:27-06:00"
     },
     {
       "path": "index.html",
@@ -20,15 +22,15 @@
       "description": "Welcome to the website. This website introduces Doubly Robust Estimator (DRE) in causal inference. This is a class project from course STAT 451: Causal Inference at Macalester College. The contents in this blog are collaborative efforts from Kristy Ma and Xiang Li.\n",
       "author": [],
       "contents": "\r\nTable of contents\r\nTo start exploring, please simply navigate to tabs on the upper right corner. We will start by introducing causal inference and motivation behind this project, then diving into mathematical aspect of Doubly Robust Estimator (DRE), and ending up with a simply computation simulation study. Have fun!\r\nIf you have any questions, please reach out to yma1@macalester.edu and xli2@macalester.edu. Thank you!\r\n\r\n\r\n\r\n",
-      "last_modified": "2023-03-05T15:18:44-06:00"
+      "last_modified": "2023-03-05T15:28:28-06:00"
     },
     {
-      "path": "reg+ipw.html",
+      "path": "reg-ipw.html",
       "title": "Outcome Regression and Inverse Probability Weighting",
       "description": "Some additional details about the website",
       "author": [],
-      "contents": "\r\nPre DRE: Two common adjusting methods {#reg+ipw}\r\nOutcome regression (REG)\r\nInverse Probability Weighting (IPW)\r\n\r\n\r\n\r\n",
-      "last_modified": "2023-03-05T15:18:45-06:00"
+      "contents": "\r\nPre DRE: Two common adjusting methods\r\nOutcome regression (REG)\r\nInverse Probability Weighting (IPW)\r\n\r\n\r\n\r\n",
+      "last_modified": "2023-03-05T15:28:29-06:00"
     },
     {
       "path": "sim.html",
@@ -36,7 +38,7 @@
       "description": "Some additional details about the website",
       "author": [],
       "contents": "\r\nComputational Simulation\r\n\r\n\r\n\r\n",
-      "last_modified": "2023-03-05T15:18:46-06:00"
+      "last_modified": "2023-03-05T15:28:29-06:00"
     },
     {
       "path": "wrapup.html",
@@ -44,7 +46,7 @@
       "description": "Some additional details about the website",
       "author": [],
       "contents": "\r\nTitle\r\n\r\n\r\n\r\n",
-      "last_modified": "2023-03-05T15:18:46-06:00"
+      "last_modified": "2023-03-05T15:28:30-06:00"
     }
   ],
   "collections": []
