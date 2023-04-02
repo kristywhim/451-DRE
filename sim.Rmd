@@ -1,8 +1,623 @@
 ---
-title: "Simulation using DRE"
+title: "Doubly Robust Estimation of Causal Effects in R"
 description: |
   Some additional details about the website
 ---
 
 # Computational Simulation {#sim}
 
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, 
+        fig.align = "center")
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(knitr)
+```
+
+```{r, include=FALSE}
+simu_observational_data <- function(simu_id = 1, n_obs) {
+  X_1    <- rnorm(n_obs)
+  X_2    <- rnorm(n_obs)
+  XB     <- 0.2*X_1 + 0.2*X_2
+  prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
+  A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
+  
+  # The causal effect of receiving A is 10
+  Y      <- 100 + 2*X_1 + 2*X_2 + 10*A + rnorm(n_obs) 
+  
+  data.frame(simu_id = simu_id, n_obs = n_obs, 
+             var_1 = X_1, var_2 = X_2, 
+             treatment = A, outcome = Y)  
+} 
+```
+
+```{r, include=FALSE}
+prop_score_model <- function(data) {
+  glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
+}
+```
+
+```{r, include=FALSE}
+mean_outcome_model <- function(data) {
+  glm(outcome ~ treatment + var_1 + var_2, data = data)
+}
+```
+
+```{r, include=FALSE}
+ipw_estimator <- function(data, model) {
+  data %>% 
+    mutate(
+      prob = predict(model, newdata = data, type = 'response'),
+    ) %>% 
+    summarise(
+      EY0_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
+      EY1_ipw = mean(outcome*treatment / prob)
+    ) %>% 
+    mutate(ipw = EY1_ipw - EY0_ipw)
+}
+```
+
+```{r, include=FALSE}
+naive_estimator <- function(data) {
+  data %>% 
+    summarise(
+      EY0_naive = mean(outcome*(1 - treatment)),
+      EY1_naive = mean(outcome*treatment)
+    ) %>% 
+    mutate(naive_estimator = EY1_naive- EY0_naive)
+}
+```
+
+```{r, include=FALSE}
+outcome_model_estimator <- function(data) {
+   mean_model <- mean_outcome_model(data) # Compute the model
+   summary(mean_model)$coefficients['treatment', ][1] # Coefficient for treatment
+}
+```
+
+```{r, include=FALSE}
+dr_estimator <- function(data, prop_model, mean_model) {
+  data %>% 
+    mutate(
+      prob = predict(prop_model, newdata = data, type = 'response'),
+      pred = predict(mean_model, newdata = data, type = 'response'),
+      augm = (treatment - prob)*pred
+    ) %>% 
+    summarise(
+      EY0_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
+      EY1_dr = mean((outcome*treatment - augm) / prob)
+    ) %>% 
+    mutate(dre = EY1_dr - EY0_dr)
+}
+```
+
+```{r, include=FALSE}
+n_simu <- 150
+n_obs <- 200
+
+nested_df <- 
+  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
+  group_by(simu_id) %>% 
+  nest() %>% 
+  mutate(
+    prop_model     = map(data, prop_score_model),
+    mean_model     = map(data, mean_outcome_model),
+    naive_estimate = map(data, naive_estimator),
+    model_estimate = map(data, outcome_model_estimator),
+    ipw_estimate   = map2(data, prop_model, ipw_estimator),
+    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
+  ) %>% 
+  ungroup() %>% 
+  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+```
+
+
+---
+# What is Causal Inference in Data Science?
+
+--
+
+- A/B tests are great at allowing us to reach causal claims
+
+--
+
+- Will A or B cause a *better* outcome? (i.e, will A cause a bigger client retention than B)
+
+--
+
+- Sometimes we have data on A and B but not generated through a random experiment
+
+--
+
+- Relying solely on this data won't allow you to make correct causal claims about A and B 
+
+--
+
+- We can use causal inference methods to try to estimate the causal effect of using A versus B even from a non random experiment
+
+---
+# What is this talk about?
+
+--
+
+- *Goal*: estimate a causal effect when you do not have data from a randomized experiment 
+
+--
+
+- *Strategy 1*: Re weighting each observation by the probability of receiving A or B so that the data approximates a randomized experiment 
+
+--
+
+- *Strategy 2*: Modelling the outcome directly with a linear regression
+
+--
+
+- *Combining Idea 1 and 2*: To form doubly robust estimator
+
+---
+# What is a causal effect?
+
+**Conterfactual difference**: On average receiving treatment $A$ compared to $B$ will cause a difference in the outcome of $\delta$
+
+$$\delta = E[Y(A)] - E[Y(B)]$$
+
+where $Y(A)$ is the outcome if treatment $A$ had been received, and $Y(B)$ is the outcome if treatment $B$ had been received.
+
+**Mean difference**: The average difference in outcomes between those receiving $A$ and $B$
+
+$$E[Y|A] - E[Y|B]$$
+
+- In an A/B test we can estimate the causal effect $\delta$ by a simple difference of means because of randomization
+
+$$E[Y|A] - E[Y|B] = E[Y(A)] - E[Y(B)]$$
+
+- In non randomized data this is not necessarily true
+
+$$E[Y|A] - E[Y|B] \neq E[Y(A)] - E[Y(B)]$$
+
+---
+# A non randomized data simulation
+
+--
+
+```{r simu_observational_data, eval = FALSE}
+simu_observational_data <- function(n_obs) {
+  X_1    <- rnorm(n_obs)
+  X_2    <- rnorm(n_obs)
+  XB     <- 0.25*X_1 + 0.25*X_2
+  prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
+  A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
+  
+  # The causal effect of receiving A is 10
+  Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs)  
+  
+  data.frame(var_1 = X_1, var_2 = X_2, treatment = A, outcome = Y)  
+} 
+```
+
+--
+
+- In this case $\delta = E[Y(A)] - E[Y(B)] = 10$
+
+--
+
+- Unlike a random experiment, the probability of receiving treatment *A* depends on *X_1* and *X_2*
+
+--
+
+- This makes it difficult to to estimate the causal effect
+
+---
+# A non randomized experiment
+
+- How is is different from an experiment or A/B-test?
+
+```{r, eval = FALSE}
+# Replace this
+prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
+A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
+# With this
+A      <- rbinom(n_obs, 1, 0.5) # This is an A/B =)
+```
+
+---
+# Naive estimator
+
+--
+
+- Naive estimator is the difference between the mean of the treatment $A$ and $B$
+
+$$\hat{\delta}_{Naive} = \frac{1}{n}\sum_{i=1}^{n}\Big[Y_{i}A_{i} - Y_{i}(1-A_{i})\Big]$$
+
+--
+
+- We are trying to estimate this
+
+$$\delta = E[Y(A)] - E[Y(B)]$$
+
+--
+
+```{r, eval = FALSE}
+naive_estimator <- function(data) {
+  data %>% 
+    summarise(
+      EYB_naive = mean(outcome*(1 - treatment)),
+      EYA_naive = mean(outcome*treatment)
+    ) %>% 
+    mutate(naive_estimator = EYA_naive- EYB_naive)
+}
+```
+
+
+
+---
+# Naive estimator fails in this case
+
+--
+
+- The difference of means does not capture exclusively the effect of *A* on the outcome but mixes in effects from other variables as well
+
+```{r, echo = FALSE, out.width="50%", fig.align="center"}
+include_graphics(here::here('presentation/pictures', 'mordor_effect.png'))
+```
+
+---
+class: center
+
+# Naive estimator fails in this case
+
+```{r, echo = FALSE}
+mean_naive_estimator <- 
+  mean(nested_df$naive_estimator)
+
+nested_df %>% 
+  ggplot(aes(x = simu_id, y = naive_estimator)) +
+  ggtitle(paste('The mean of the naive estimator is ', round(mean_naive_estimator, 2))) + 
+  geom_point() + 
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
+
+---
+# Strategy 1: Inverse Probability Weighting
+## Intuition Behind it
+
+--
+
+- In an experiment the probability of receiving a treatment are always equal across all units (i.e., 50%)
+
+--
+ 
+- In the current case, the probability of receiving the treatment depends on variables that affect the outcome
+ 
+--
+
+- If we knew what this probabilities are we could reweight our sample such that the data would better match a randomized experiment
+
+--
+
+- In the reweighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up
+
+---
+# Strategy 1: Inverse Probability Weighting - Propensity Score
+
+--
+
+- How do we estimate these probabilities? 
+
+--
+
+- The propensity score is just a logistic regression of the probability of receiving the treatment
+
+--
+
+```{r, eval = FALSE}
+prop_score_model <- function(data) {
+  glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
+}
+```
+
+- It is just a fancy name for logistic regression to sound smart at conferences!
+
+---
+# Strategy 1: IPW Estimator
+
+- Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment
+
+$$\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i}}{\color{red}{\pi(X_{i})}} - \frac{Y_{i}(1-A_{i})}{\color{red}{1-\pi(X_{i})}}\bigg]$$
+
+```{r, eval = FALSE}
+ipw_estimator <- function(data, model) {
+  data %>% 
+    mutate(
+      prob = predict(model, newdata = data, type = 'response'),
+    ) %>% 
+    summarise(
+      EYB_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
+      EYA_ipw = mean(outcome*treatment / prob)
+    ) %>% 
+    mutate(ipw = EYA_ipw - EYB_ipw)
+}
+```
+
+---
+class: center
+# IPW Performance 
+
+```{r, echo = FALSE}
+mean_ipw_estimator <- 
+  mean(nested_df$ipw)
+
+nested_df %>% 
+  ggplot(aes(x = simu_id, y = ipw)) +
+  ggtitle(paste('The mean of the ipw estimator is ', round(mean_ipw_estimator, 2))) + 
+  geom_point(color = 'blue') +
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
+
+
+---
+# IPW could fail
+
+```{r, eval = FALSE}
+prop_score_model <- function(data) {
+  # OOPS! I forgot var_2
+  glm(treatment ~ var_1, data = data, family = 'binomial')
+}
+```
+
+```{r, echo = FALSE, out.width="50%", fig.align="center"}
+include_graphics(here::here('presentation/pictures', 'monkey_modeler.png'))
+```
+
+
+---
+# Strategy 2: Model the Outcome
+
+- Default strategy of data scientist would be to create a linear model
+
+ $$Y =\alpha_0 + \alpha_1 X_1 + \alpha_2 X_2 +\delta A+ \varepsilon$$ 
+
+- Use $\hat{\delta}$ as the estimator of the causal effect
+
+```{r, eval = FALSE}
+mean_outcome_model <- function(data) {
+  glm(outcome ~ var_1 + var_2 + treatment, data = data)
+}
+```
+
+```{r, eval = FALSE}
+outcome_model_estimator <- function(data) {
+   mean_model <- mean_outcome_model(data)
+   summary(mean_model)$coefficients['treatment', ][1]
+}
+```
+
+
+---
+class: center
+# Strategy 2: Performance - Simulation
+
+```{r, echo = FALSE}
+mean_model_estimator <- 
+  mean(nested_df$model_estimate)
+
+nested_df %>% 
+  ggplot(aes(x = simu_id, y = model_estimate)) +
+  ggtitle(paste('The mean of the model estimate is ', round(mean_model_estimator, 2))) + 
+  geom_point(color = 'blue') +
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
+
+---
+# Outcome model could also fail
+
+```{r, eval = FALSE}
+mean_outcome_model <- function(data) {
+  # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
+  glm(outcome ~ var_1 + treatment, data = data)
+}
+```
+
+```{r, echo = FALSE, out.width="40%", fig.align="center"}
+include_graphics(here::here('presentation/pictures', 'ai.png'))
+```
+
+---
+# Combining Strategy 1 and 2
+
+--
+
+- If the propensity score model is incorrect, strategy 1 will not work
+
+--
+
+- If the outcome model is incorrect, strategy 2 will not work
+
+--
+
+- If you combine both approaches, you just need either one to work but not both
+
+--
+
+- As a data scientist you have 1 out of 2 chances to get the correct answer
+
+--
+
+- This is called the doubly robustness property
+
+---
+# This could also fail but is less likely to do so
+
+```{r, echo = FALSE, out.width="75%", fig.align="center"}
+include_graphics(here::here('presentation/pictures', 'predator.png'))
+```
+
+---
+# Combining Strategy 1 and 2 - Doubly Robust Estimator
+
+$$\hat{\delta}_{DR} = $$
+
+$$\frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{\pi(X_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{1-\pi(X_{i})}\bigg]$$
+
+where $$\mu(X, A) = \hat{\alpha}_0 + \hat{\alpha}_1 X_1 + \hat{\alpha}_2 X_2 +\hat{\delta} A$$
+
+- The term in red is said to *augment* the IPW estimator
+
+- It can be shown that this estimator will consistently estimate $\delta = E[Y(A)]-E[Y(B)]$ as long as either $\pi(X_{i})$ or $\mu(X, A)$ are correct 
+
+---
+# Combining Strategy 1 and 2 - Doubly Robust Estimator
+
+```{r, eval = FALSE}
+dr_estimator <- function(data, prop_model, mean_model) {
+  data %>% 
+    mutate(
+      prob = predict(prop_model, newdata = data, type = 'response'),
+      pred = predict(mean_model, newdata = data, type = 'response'),
+      augm = (treatment - prob)*pred
+    ) %>% 
+    summarise(
+      EYB_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
+      EYA_dr = mean((outcome*treatment - augm) / prob)
+    ) %>% 
+    mutate(dre = EYA_dr - EYB_dr)
+}
+```
+
+---
+class: center
+# DRE Performance
+
+```{r, echo = FALSE}
+mean_dre_estimator <- 
+  mean(nested_df$dre)
+
+nested_df %>% 
+  ggplot(aes(x = simu_id, y = dre)) +
+  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
+  geom_point(color = 'red') +
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
+
+
+---
+# Doubly Robust Estimator - Propensity Score is Incorrect
+
+```{r}
+prop_score_model <- function(data) {
+  # OOPS! I forgot var_2
+  glm(treatment ~ var_1, data = data, family = 'binomial')
+}
+```
+
+---
+class: center
+# Doubly Robust Estimator - Propensity Score is Incorrect
+
+```{r, echo = FALSE}
+nested_pe_df <- 
+  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
+  group_by(simu_id) %>% 
+  nest() %>% 
+  mutate(
+    prop_model     = map(data, prop_score_model),
+    mean_model     = map(data, mean_outcome_model),
+    naive_estimate = map(data, naive_estimator),
+    model_estimate = map(data, outcome_model_estimator),
+    ipw_estimate   = map2(data, prop_model, ipw_estimator),
+    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
+  ) %>% 
+  ungroup() %>% 
+  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+```
+
+
+```{r, echo = FALSE, out.width="60%"}
+mean_dre_estimator <- 
+  mean(nested_pe_df$dre)
+
+nested_pe_df %>% 
+  ggplot(aes(x = simu_id, y = dre)) +
+  geom_point(color = 'red') +
+  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
+
+---
+# Doubly Robust Estimator - Mean Model is Incorrect
+
+```{r}
+mean_outcome_model <- function(data) {
+  # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
+  glm(outcome ~ var_1 + treatment, data = data)
+}
+```
+
+---
+class: center
+# Doubly Robust Estimator - Mean Model is Incorrect
+
+```{r, echo = FALSE}
+nested_om_df <- 
+  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
+  group_by(simu_id) %>% 
+  nest() %>% 
+  mutate(
+    prop_model     = map(data, prop_score_model),
+    mean_model     = map(data, mean_outcome_model),
+    naive_estimate = map(data, naive_estimator),
+    model_estimate = map(data, outcome_model_estimator),
+    ipw_estimate   = map2(data, prop_model, ipw_estimator),
+    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
+  ) %>% 
+  ungroup() %>% 
+  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+```
+
+```{r, echo = FALSE, out.width="60%"}
+mean_dre_estimator <- 
+  mean(nested_om_df$dre)
+
+nested_om_df %>% 
+  ggplot(aes(x = simu_id, y = dre)) +
+  geom_point(color = 'red') +
+  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
+
+---
+# Conclusion
+
+- If you have non randomized data you cannot simply calculate the difference in means between $A$
+ and $B$ to estimate the causal effect
+ 
+- You can use the IPW estimator based on a logistic regression of the probability of receiving the treatment
+
+- You can model the outcome based on a linear regression with the confounding variables as well as $A$
+
+- Or you can use the doubly robust estimator which will work as long as either the logistic or the linear regression are correct, but not both
+
+---
+# References
+
+- Lunceford, Jared K., and Marie Davidian. "Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study." Statistics in medicine 23.19 (2004): 2937-2960.
+
+---
+# Thank you
+
+--
+
+- Ludmila Janda
+
+--
+
+- Vroom data team
