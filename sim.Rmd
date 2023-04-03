@@ -116,6 +116,7 @@ nested_df <-
 
 
 ---
+
 # What is Causal Inference in Data Science?
 
 --
@@ -139,6 +140,7 @@ nested_df <-
 - We can use causal inference methods to try to estimate the causal effect of using A versus B even from a non random experiment
 
 ---
+
 # What is this talk about?
 
 --
@@ -158,6 +160,7 @@ nested_df <-
 - *Combining Idea 1 and 2*: To form doubly robust estimator
 
 ---
+
 # What is a causal effect?
 
 **Conterfactual difference**: On average receiving treatment $A$ compared to $B$ will cause a difference in the outcome of $\delta$
@@ -179,6 +182,7 @@ $$E[Y|A] - E[Y|B] = E[Y(A)] - E[Y(B)]$$
 $$E[Y|A] - E[Y|B] \neq E[Y(A)] - E[Y(B)]$$
 
 ---
+
 # A non randomized data simulation
 
 --
@@ -211,6 +215,7 @@ simu_observational_data <- function(n_obs) {
 - This makes it difficult to to estimate the causal effect
 
 ---
+
 # A non randomized experiment
 
 - How is is different from an experiment or A/B-test?
@@ -224,6 +229,7 @@ A      <- rbinom(n_obs, 1, 0.5) # This is an A/B =)
 ```
 
 ---
+
 # Naive estimator
 
 --
@@ -254,17 +260,19 @@ naive_estimator <- function(data) {
 
 
 ---
+
 # Naive estimator fails in this case
 
 --
 
 - The difference of means does not capture exclusively the effect of *A* on the outcome but mixes in effects from other variables as well
 
-```{r, echo = FALSE, out.width="50%", fig.align="center"}
-include_graphics(here::here('presentation/pictures', 'mordor_effect.png'))
-```
+<!-- ```{r, echo = FALSE, out.width="50%", fig.align="center"} -->
+<!-- include_graphics(here::here('presentation/pictures', 'mordor_effect.png')) -->
+<!-- ``` -->
 
 ---
+
 class: center
 
 # Naive estimator fails in this case
@@ -282,6 +290,7 @@ nested_df %>%
 ```
 
 ---
+
 # Strategy 1: Inverse Probability Weighting
 ## Intuition Behind it
 
@@ -302,6 +311,7 @@ nested_df %>%
 - In the reweighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up
 
 ---
+
 # Strategy 1: Inverse Probability Weighting - Propensity Score
 
 --
@@ -323,6 +333,7 @@ prop_score_model <- function(data) {
 - It is just a fancy name for logistic regression to sound smart at conferences!
 
 ---
+
 # Strategy 1: IPW Estimator
 
 - Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment
@@ -344,6 +355,7 @@ ipw_estimator <- function(data, model) {
 ```
 
 ---
+
 class: center
 # IPW Performance 
 
@@ -361,6 +373,7 @@ nested_df %>%
 
 
 ---
+
 # IPW could fail
 
 ```{r, eval = FALSE}
@@ -370,12 +383,9 @@ prop_score_model <- function(data) {
 }
 ```
 
-```{r, echo = FALSE, out.width="50%", fig.align="center"}
-include_graphics(here::here('presentation/pictures', 'monkey_modeler.png'))
-```
-
 
 ---
+
 # Strategy 2: Model the Outcome
 
 - Default strategy of data scientist would be to create a linear model
@@ -399,6 +409,7 @@ outcome_model_estimator <- function(data) {
 
 
 ---
+
 class: center
 # Strategy 2: Performance - Simulation
 
@@ -415,6 +426,7 @@ nested_df %>%
 ```
 
 ---
+
 # Outcome model could also fail
 
 ```{r, eval = FALSE}
@@ -424,11 +436,8 @@ mean_outcome_model <- function(data) {
 }
 ```
 
-```{r, echo = FALSE, out.width="40%", fig.align="center"}
-include_graphics(here::here('presentation/pictures', 'ai.png'))
-```
-
 ---
+
 # Combining Strategy 1 and 2
 
 --
@@ -452,13 +461,12 @@ include_graphics(here::here('presentation/pictures', 'ai.png'))
 - This is called the doubly robustness property
 
 ---
+
 # This could also fail but is less likely to do so
 
-```{r, echo = FALSE, out.width="75%", fig.align="center"}
-include_graphics(here::here('presentation/pictures', 'predator.png'))
-```
 
 ---
+
 # Combining Strategy 1 and 2 - Doubly Robust Estimator
 
 $$\hat{\delta}_{DR} = $$
@@ -472,6 +480,7 @@ where $$\mu(X, A) = \hat{\alpha}_0 + \hat{\alpha}_1 X_1 + \hat{\alpha}_2 X_2 +\h
 - It can be shown that this estimator will consistently estimate $\delta = E[Y(A)]-E[Y(B)]$ as long as either $\pi(X_{i})$ or $\mu(X, A)$ are correct 
 
 ---
+
 # Combining Strategy 1 and 2 - Doubly Robust Estimator
 
 ```{r, eval = FALSE}
@@ -491,6 +500,7 @@ dr_estimator <- function(data, prop_model, mean_model) {
 ```
 
 ---
+
 class: center
 # DRE Performance
 
@@ -508,6 +518,7 @@ nested_df %>%
 
 
 ---
+
 # Doubly Robust Estimator - Propensity Score is Incorrect
 
 ```{r}
@@ -518,6 +529,7 @@ prop_score_model <- function(data) {
 ```
 
 ---
+
 class: center
 # Doubly Robust Estimator - Propensity Score is Incorrect
 
@@ -562,7 +574,7 @@ mean_outcome_model <- function(data) {
 ```
 
 ---
-class: center
+<!-- class: center -->
 # Doubly Robust Estimator - Mean Model is Incorrect
 
 ```{r, echo = FALSE}
@@ -611,13 +623,3 @@ nested_om_df %>%
 
 - Lunceford, Jared K., and Marie Davidian. "Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study." Statistics in medicine 23.19 (2004): 2937-2960.
 
----
-# Thank you
-
---
-
-- Ludmila Janda
-
---
-
-- Vroom data team
