@@ -2129,7 +2129,13 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
 <div class="d-article">
 <h1 id="introduction">Introduction</h1>
+<p>“Correlation does not imply causation.” You might have heard this saying from your intro statistics course, and we knew if we’d like to find some evidence that makes us believe the causation. In causal inference, we will investigate the causal relationship between treatment (policy/ dosage/ drug/ habits, etc.) and the outcome of interest. By assigning people to different groups, we try to use various methods to reach the causal conclusion on which group has a better outcome? To do this, we should estimate the “causal effect”.</p>
+<p>A common way of estimating this is to calculate the <strong>average causal effect (ACE)</strong>, denoted by:
+<span class="math inline">\(E[Y^{a=1}]- E[Y^{a=0}]\)</span>.</p>
+<p>In this formula, a represents the potential treatment assignment: <span class="math inline">\(a=0\)</span> means the individual will not be assigned treatment (control), and <span class="math inline">\(a=1\)</span> dictates receiving treatment. In causal inference study, a huge blind spot is that after we observe the data, we want to know what would happen to an individual if they were to be assigned into the other group; unfortunately, this can never happen. As a result, we use capital <span class="math inline">\(A\)</span> to represent the actual treatment received, and <span class="math inline">\(a\)</span> for potential treatment under causal inference studies. <span class="math inline">\(Y\)</span> is the outcome - it can be either quantitative or indicative. Combining together, the formula above makes sense: it records the average difference in the potential outcome between treatment and control group.</p>
+<p>In statistics, after defining some particular interests and writing them out as mathematical formulas, researchers look for <strong>estimators</strong> to estimate the true parameter (in our case, that is the ACE). <strong>Doubly Robust Estimator (DRE)</strong> is a nice one due to its unbiasedness, meaning its average is equivalent to the true value of parameter (ACE). The reason it is called “doubly” is from the fact that DRE is composed of two different estimators: Inverse Probability Weighting (IPW), and Outcome Regression Model (REG). While this may not make any sense, don’t worry - in the next section, “Regression and IPW”, we will firstly go through these two regular, popular approaches in estimating ACE, and see how our doubly robust estimator serves to combine them and become even more powerful!</p>
 <h1 id="motivation-of-the-project">Motivation of the project</h1>
+<p>Estimating causal effects from data is a fundamental problem in many fields, including health care, economics, and many (social) sciences subjects. Xiang comes from an economic background whereas Kristy comes from a biology background. We teamed up and decided to explore this new, popular method, Doubly Robust estimation (DRE), which is widely used in biostatistics and econometric applications in many Difference-in-Difference (DiD, another way to say we are examining causal effects) experiments and causal inference contexts.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
@@ -2138,6 +2144,15 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <div class="d-appendix">
 </div>
 
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
 
 <!--radix_placeholder_site_after_body-->
 <!--/radix_placeholder_site_after_body-->
