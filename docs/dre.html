@@ -2142,22 +2142,19 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 \frac{1}{n} \sum_{i=1}^{n} \hat{Y}_{i}^{a}=E\left[Y^{a}\right]
 \]</span></p>
 <p>Then the true ACE will become:</p>
-$$
-{
-<span class="math display">\[\begin{aligned}
+<p><span class="math display">\[
+\scriptsize{\begin{aligned}
 E\left[\widehat{\left[D R E_{a=1}\right.}-\widehat{\left. D R E_{a=0}\right]}\right] &amp;= E\left[\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i}\left(Y_{i}-\hat{Y}_{i}^{a=1}\right)}{\widehat{P S_{i}}}+\hat{Y}_{i}^{a=1}\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right)\left(Y_{i}-\hat{Y}_{i}^{a=0}\right)}{1-{\widehat PS_{i}}}+\hat{Y}_{i}^{a=0}\right)\right] \\
 &amp; =\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{A_{i}\left(Y_{i}-\hat Y_{i}^{a=1}\right)}{\widehat{PS_{i}}}+\hat Y_{i}^{a=1}\right)\right]-\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right)\left(Y_{i}-\hat Y_{i}^{a=0}\right)}{1-{\widehat {PS}_{i}}}+\hat{Y}^{a=0}\right)\right] \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(E\left[\frac{A_{i}\left(Y_{i}-\hat Y_{i}^{a=1}\right)}{\widehat {PS_{i}}}\right]+E\left[\hat Y_{i}^{a=1}\right]\right)-\frac{1}{n} \sum_{i=1}^{n}\left(E\left[\frac{\left(1-A_{i}\right)\left(Y_{i}-\hat Y_{i}^{a=0}\right)}{1-{\widehat P S_{i}}}\right]+E\left[\hat Y_{i}^{a=0}\right]\right) \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat {PS_{i}}}\right) E\left[\left [Y_{i}|A_{i}=1\right)-E\left[\hat Y_{i}^{a=1}|A=1\right]+\hat{Y}_{i}^{a=1}\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-{\widehat {PS_{i}}}}\right) E\left[Y_i|A_{i}=0]-E[\hat Y_{i}^{a=0}|A=0\right]+\hat{Y}_{i}^{a=0}\right)\right. \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat{PS}_{i}}\right)\left(\hat{Y}_{i}^{a=1}-\hat{Y}_{i}^{a=1}\right)+\hat{Y}_{i}^{a=1}\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-\widehat{PS}_{i}}\right)\left(\hat{Y}_{i}^{a=0}-\hat{Y}_{i}^{a=0}\right)+\hat{Y}_{i}^{a=0}\right) \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat{PS}_{i}}\right)\left(0\right)+\hat{Y}_{i}^{a=1}\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-\widehat{PS}_{i}}\right)\left(0\right)+\hat{Y}_{i}^{a=0}\right) \\
-
 &amp; =\frac{\sum_{i=1}^{n} \hat{Y}_{i}^{a=1}}{n}-\frac{\sum_{i=1}^{n} \hat{Y}_{i}^{a=0}}{n} \\
 &amp; =E\left[Y^{\alpha=1}\right]-E\left[Y^{\alpha=0}\right]
-\end{aligned}\]</span>
-<p>}
-$$
-<span class="math inline">\(E[Y_i|A=1]=E[\hat {Y_{i}^{a=1}}]\)</span></p>
+\end{aligned}}
+\]</span></p>
+<p><span class="math inline">\(E[Y_i|A=1]=E[\hat {Y_{i}^{a=1}}]\)</span></p>
 <h2 id="when-reg-is-misspecified-but-ipw-is-correct">When REG is misspecified, but IPW is correct</h2>
 <p>The second situation is that when we have REG model misspecified:
 <span class="math display">\[
