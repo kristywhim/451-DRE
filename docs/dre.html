@@ -90,27 +90,24 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--radix_placeholder_meta_tags-->
   <title>Causal Inference: Doubly Robust Estimator: Doubly Robust Estimator</title>
 
-  <meta property="description" itemprop="description" content="Some additional details about the website"/>
 
 
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
   <meta property="og:title" content="Causal Inference: Doubly Robust Estimator: Doubly Robust Estimator"/>
   <meta property="og:type" content="article"/>
-  <meta property="og:description" content="Some additional details about the website"/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="Causal Inference: Doubly Robust Estimator"/>
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
   <meta property="twitter:title" content="Causal Inference: Doubly Robust Estimator: Doubly Robust Estimator"/>
-  <meta property="twitter:description" content="Some additional details about the website"/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description"]}},"value":[{"type":"character","attributes":{},"value":["Doubly Robust Estimator"]},{"type":"character","attributes":{},"value":["Some additional details about the website"]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description"]}},"value":[{"type":"character","attributes":{},"value":["Doubly Robust Estimator"]},{"type":"NULL"}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2094,7 +2091,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Doubly Robust Estimator","description":"Some additional details about the website","authors":[]}
+{"title":"Doubly Robust Estimator","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2123,7 +2120,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <h1>Doubly Robust Estimator</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-<p><p>Some additional details about the website</p></p>
+
 </div>
 
 
@@ -2132,7 +2129,8 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <h2 id="properties-of-dre">Properties of DRE</h2>
 <h1 id="proof-of-dres-unbiasedness">Proof of DRE’s unbiasedness</h1>
 <h2 id="when-ipw-is-misspecified-but-reg-is-correct">When IPW is misspecified, but REG is correct</h2>
-<p>The first situation is that when we have IPW model misspecified:</p>
+<p>The first situation is that when we have IPW model
+misspecified:</p>
 <p><span class="math display">\[
 \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S}_{i}}\right) \neq E\left[Y^{a=1}\right]\\
 \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=0\right]}{1-\widehat{P S}_{i}}\right) \neq E\left[Y^{a=0}\right]
@@ -2154,34 +2152,47 @@ E\left[\widehat{\left[D R E_{a=1}\right.}-\widehat{\left. D R E_{a=0}\right]}\ri
 &amp; =E\left[Y^{\alpha=1}\right]-E\left[Y^{\alpha=0}\right]
 \end{aligned}}
 \]</span></p>
-<p><span class="math inline">\(E[Y_i|A=1]=E[\hat {Y_{i}^{a=1}}]\)</span></p>
 <h2 id="when-reg-is-misspecified-but-ipw-is-correct">When REG is misspecified, but IPW is correct</h2>
-<p>The second situation is that when we have REG model misspecified:
-<span class="math display">\[
+<p>The second situation is that when we have REG
+model misspecified: <span class="math display">\[
 \frac{1}{n} \sum_{i=1}^{n} \hat{Y}_{i}^{a} \neq E\left[Y^{a}\right]
-\]</span>
-But our IPW model is correct:
-<span class="math display">\[
+\]</span> But our IPW model is correct: <span class="math display">\[
 \begin{aligned}
 &amp; \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S_i}}\right)=E\left[Y^{a=1}\right] \\
 &amp; \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=0\right]}{1-\widehat{P S}_{i}}\right)=E\left[Y^{a=0}\right] \\
 \end{aligned}
-\]</span>
-Then the true ACE becomes:
-<span class="math display">\[
+\]</span> First, let’s rearrange DRE’s formula a bit:</p>
+<p><span class="math display">\[
+\scriptsize{
+\begin{aligned}
+\widehat{D R E}_{a=1}-\widehat{D R E}_{a=0}&amp;=\frac{1}{n} \sum_{i=1}^n\left(\frac{A_i\left(Y_i-\hat{Y}_i^{a=1}\right)}{\widehat{P S}_i}+\hat{Y}_i^{a=1}\right)-\frac{1}{n} \sum_{i=1}^n\left(\frac{\left(1-A_i\right)\left(Y_i-\hat{Y}_i^{a=0}\right)}{1-\widehat{P S}_i}+\hat{Y}_i^{a=0}\right) \\
+&amp; =\frac{1}{n} \sum_{i=1}^n\left(\frac{A_i Y_i}{\widehat{P S}_i}-\frac{A_i \hat{Y}_i^{a=1}}{\widehat{P S}_i}+\hat{Y}_i^{a=1}\right)-\frac{1}{n} \sum_{i=1}^n\left(\frac{\left(1-A_i\right) Y_i}{1-\widehat{P S}_i}-\left(\frac{\left(1-A_i\right) \hat{Y}_i^{a=0}}{1-\widehat{P S}_i}\right)+\hat{Y}_i^{a=0}\right) \\
+&amp; =\frac{1}{n} \sum_{i=1}^n\left(\frac{A_i Y_i}{\widehat{P S_i}}-\left(\frac{A_i \widehat{Y}_i^{a=1}}{\widehat{P S_i}}-\widehat{Y}_i^{a=1}\right)\right)-\frac{1}{n} \sum_{i=1}^n\left(\frac{\left(1-A_i\right) Y_i}{1-\widehat{P S_i}}-\left(\frac{\left(1-A_i\right) \hat{Y}_i^{a=0}}{1-\widehat{P S_i}}-\widehat{Y}_i^{a=0}\right)\right) \\
+&amp; =\frac{1}{n} \sum_{i=1}^n\left(\frac{A_i Y_i}{\widehat{P S}_i}-\hat{Y}_i^{a=1}\left(\frac{A_i}{\widehat{P S}_i}-1\right)\right)-\frac{1}{n} \sum_{i=1}^n\left(\frac{\left(1-A_i\right) Y_i}{1-\widehat{P S}_i}-\hat{Y}_i^{a=0}\left(\frac{\left(1-A_i\right)}{1-\widehat{P S_i}}-1\right)\right) \\
+&amp; =\frac{1}{n} \sum_{i=1}^n\left(\frac{A_i Y_i}{\widehat{P S}_i}-\hat{Y}_i^{a=1}\left(\frac{A_i-\widehat{P S}_i}{\widehat{P S}_i}\right)\right)-\frac{1}{n} \sum_{i=1}^n\left(\frac{\left(1-A_i\right) Y_i}{1-\widehat{P S}_i}-\hat{Y}_i^{a=0}\left(\frac{\left(1-A_i\right)-\left(1-\widehat{P S}_i\right)}{1-\widehat{P S}_i}\right)\right) \\
+&amp;
+\end{aligned}}
+\]</span></p>
+<p>Then the true ACE becomes: <span class="math display">\[
 \scriptsize{\begin{aligned}
 E\left[\widehat{D R E_{a=1}}-\widehat{D R E_{a=0}}\right]&amp;=E\left[\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i} Y_{i}}{\widehat{P S_{i}}}-\hat{Y}_{i}^{a=1}\left(\frac{A_{i}-\widehat{P S}_{i}}{\widehat{P S}_{i}}\right)\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right) Y_{i}}{1-\widehat{P S_{i}}}-\hat{Y}_{i}^{a=0}\left(\frac{\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)}{1-\widehat{P S} _{i}}\right)\right)\right] \\
 &amp; =\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{A_{i} Y_{i}}{\widehat{P S_{i}}}-\hat{Y}_{i}^{a=1}\left(\frac{A_{i}-\widehat{P S_{i}}}{\widehat{P S_{i}}}\right)\right)\right]-\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right) Y_{i}}{1-\widehat{P S}_{i}}-\hat{Y}_{i}^{a=0}\left(\frac{\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)}{1-\widehat{P S_{i}}}\right)\right)\right] \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(E\left[\frac{A_{i} Y_{i}}{\widehat{P S}_{i}}\right]-E\left[\hat{Y}_{i}^{a=1}\left(\frac{A_{i}-\widehat{P S}_{i}}{\widehat{P S} _{i}}\right)\right]\right)-\frac{1}{n} \sum_{i=1}^{n}\left(E\left[\frac{\left(1-A_{i}\right) Y_{i}}{1-\widehat{P S} _{i}}\right]-E\left[\hat{Y}_{i}^{a=0}\left(\frac{\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)}{1-\widehat{P S_{i}}}\right)\right]\right) \\
-&amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat{P S}_{i}}\right) I\left(A_{i}=1\right) E\left[Y_{i}\right]-\left(\frac{\hat{Y}_{i}^{a=1}}{\widehat{P S_{i}}}\right) E\left[A_{i}-\widehat{P S}_{i}\right]\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-\widehat{P S_{i}}}\right) I\left(A_{i}=0\right) E\left[Y_{i}\right]-\left(\frac{\hat{Y}_{i}^{a=0}}{1-\widehat{P S_{i}}}\right) E\left[\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)\right]\right) \\
-&amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat{P S}_{i}}\right) I\left(A_{i}=1\right) E\left[Y_{i}\right]-\left(\frac{\hat{Y}_{i}^{a=1}}{\widehat{P S}_{i}}\right)\left(E\left[A_{i}\right]-\widehat{P S_{i}}\right)\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-\widehat{P S}_{i}}\right) I\left(A_{i}=0\right) E\left[Y_{i}\right]-\left(\frac{\hat{Y}_{i}^{a=0}}{1-\widehat{P S}_{i}}\right)\left(E\left[\left(1-A_{i}\right)\right]-\left(1-\widehat{P S_{i}}\right)\right)\right) \\
+&amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat{P S}_{i}}\right) E\left[Y_{i}|A=1\right]-\left(\frac{\hat{Y}_{i}^{a=1}}{\widehat{P S_{i}}}\right) E\left[A_{i}-\widehat{P S}_{i}\right]\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-\widehat{P S_{i}}}\right) E\left[Y_{i}|A=0\right]-\left(\frac{\hat{Y}_{i}^{a=0}}{1-\widehat{P S_{i}}}\right) E\left[\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)\right]\right) \\
+&amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat{P S}_{i}}\right)  E\left[Y_{i}|A=1\right]-\left(\frac{\hat{Y}_{i}^{a=1}}{\widehat{P S}_{i}}\right)\left(E\left[A_{i}\right]-\widehat{P S_{i}}\right)\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-\widehat{P S}_{i}}\right)  E\left[Y_{i}|A=0\right]-\left(\frac{\hat{Y}_{i}^{a=0}}{1-\widehat{P S}_{i}}\right)\left(E\left[\left(1-A_{i}\right)\right]-\left(1-\widehat{P S_{i}}\right)\right)\right) \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{\widehat{P S}_{i}}\right) E\left[Y_{i} \mid A=1\right]-\left(\frac{\widehat{Y}_{i}^{a=1}}{\widehat{P S}_{i}}\right)\left(\widehat{P S}_{i}-\widehat{P S}_{i}\right)\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\left(\frac{1}{1-\widehat{P S}_{i}}\right) E\left[Y_{i} \mid A=0\right]-\left(\frac{\hat{Y}_{i}^{a=0}}{1-\widehat{P S}_{i}}\right)\left(\left(1-\widehat{P S}_{i}\right)-\left(1-\widehat{P S_{i}}\right)\right)\right) \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S}_{i}}-\left(\frac{\hat{Y}_{i}^{a=1}}{\widehat{P S}_{i}}\right)(0)\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=0\right]}{1-\widehat{P S}_{i}}-\left(\frac{\hat{Y}_{i}^{a=0}}{1-\widehat{P S}_{i}}\right)(0)\right) \\
 &amp; =\frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S}_{i}}\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=0\right]}{1-\widehat{P S}_{i}}\right) \\
 &amp; =E\left[Y^{a=1}\right]-E\left[Y^{a=0}\right]
 \end{aligned}}
 \]</span></p>
-<p>In either case, we prove that DRE’s unbiasedness holds when either of IPW/REG has been wrongly specified (but the other has to be correctly modeled).</p>
+<p>In either case, we prove that DRE’s unbiasedness
+in estimating the true average causal effects
+holds even though either of IPW/REG has been
+wrongly specified (but the other has to be
+correctly modeled). But it fails to work if both
+inverse-probability weighting model (IPW) and
+outcome regression model (REG) are incorrect.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
