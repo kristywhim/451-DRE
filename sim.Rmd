@@ -119,23 +119,14 @@ nested_df <-
 
 # What is Causal Inference in Data Science?
 
---
 
 - A/B tests are great at allowing us to reach causal claims
 
---
-
 - Will A or B cause a *better* outcome? (i.e, will A cause a bigger client retention than B)
-
---
 
 - Sometimes we have data on A and B but not generated through a random experiment
 
---
-
 - Relying solely on this data won't allow you to make correct causal claims about A and B 
-
---
 
 - We can use causal inference methods to try to estimate the causal effect of using A versus B even from a non random experiment
 
@@ -143,19 +134,11 @@ nested_df <-
 
 # What is this talk about?
 
---
-
 - *Goal*: estimate a causal effect when you do not have data from a randomized experiment 
 
---
-
-- *Strategy 1*: Re weighting each observation by the probability of receiving A or B so that the data approximates a randomized experiment 
-
---
+- *Strategy 1*: Re-weighting each observation by the probability of receiving A or B so that the data approximates a randomized experiment 
 
 - *Strategy 2*: Modelling the outcome directly with a linear regression
-
---
 
 - *Combining Idea 1 and 2*: To form doubly robust estimator
 
@@ -202,94 +185,12 @@ simu_observational_data <- function(n_obs) {
 } 
 ```
 
---
-
 - In this case $\delta = E[Y(A)] - E[Y(B)] = 10$
-
---
 
 - Unlike a random experiment, the probability of receiving treatment *A* depends on *X_1* and *X_2*
 
---
-
 - This makes it difficult to to estimate the causal effect
 
----
-
-# A non randomized experiment
-
-- How is is different from an experiment or A/B-test?
-
-```{r, eval = FALSE}
-# Replace this
-prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
-A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
-# With this
-A      <- rbinom(n_obs, 1, 0.5) # This is an A/B =)
-```
-
----
-
-# Naive estimator
-
---
-
-- Naive estimator is the difference between the mean of the treatment $A$ and $B$
-
-$$\hat{\delta}_{Naive} = \frac{1}{n}\sum_{i=1}^{n}\Big[Y_{i}A_{i} - Y_{i}(1-A_{i})\Big]$$
-
---
-
-- We are trying to estimate this
-
-$$\delta = E[Y(A)] - E[Y(B)]$$
-
---
-
-```{r, eval = FALSE}
-naive_estimator <- function(data) {
-  data %>% 
-    summarise(
-      EYB_naive = mean(outcome*(1 - treatment)),
-      EYA_naive = mean(outcome*treatment)
-    ) %>% 
-    mutate(naive_estimator = EYA_naive- EYB_naive)
-}
-```
-
-
-
----
-
-# Naive estimator fails in this case
-
---
-
-- The difference of means does not capture exclusively the effect of *A* on the outcome but mixes in effects from other variables as well
-
-<!-- ```{r, echo = FALSE, out.width="50%", fig.align="center"} -->
-<!-- include_graphics(here::here('presentation/pictures', 'mordor_effect.png')) -->
-<!-- ``` -->
-
----
-
-class: center
-
-# Naive estimator fails in this case
-
-```{r, echo = FALSE}
-mean_naive_estimator <- 
-  mean(nested_df$naive_estimator)
-
-nested_df %>% 
-  ggplot(aes(x = simu_id, y = naive_estimator)) +
-  ggtitle(paste('The mean of the naive estimator is ', round(mean_naive_estimator, 2))) + 
-  geom_point() + 
-  geom_hline(yintercept = 10) +
-  theme_bw()
-```
-
----
 
 # Strategy 1: Inverse Probability Weighting
 ## Intuition Behind it
@@ -298,31 +199,19 @@ nested_df %>%
 
 - In an experiment the probability of receiving a treatment are always equal across all units (i.e., 50%)
 
---
- 
 - In the current case, the probability of receiving the treatment depends on variables that affect the outcome
- 
---
 
-- If we knew what this probabilities are we could reweight our sample such that the data would better match a randomized experiment
+- If we knew what this probabilities are we could re-weight our sample such that the data would better match a randomized experiment
 
---
-
-- In the reweighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up
+- In the re-weighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up
 
 ---
 
 # Strategy 1: Inverse Probability Weighting - Propensity Score
 
---
-
 - How do we estimate these probabilities? 
 
---
-
 - The propensity score is just a logistic regression of the probability of receiving the treatment
-
---
 
 ```{r, eval = FALSE}
 prop_score_model <- function(data) {
@@ -337,6 +226,8 @@ prop_score_model <- function(data) {
 # Strategy 1: IPW Estimator
 
 - Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment
+
+$$\widehat {PS}_i=\pi(X_{i})$$
 
 $$\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i}}{\color{red}{\pi(X_{i})}} - \frac{Y_{i}(1-A_{i})}{\color{red}{1-\pi(X_{i})}}\bigg]$$
 
@@ -371,19 +262,44 @@ nested_df %>%
   theme_bw()
 ```
 
-
 ---
 
 # IPW could fail
 
+- If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail.
+
 ```{r, eval = FALSE}
-prop_score_model <- function(data) {
+prop_score_model_1 <- function(data) {
   # OOPS! I forgot var_2
   glm(treatment ~ var_1, data = data, family = 'binomial')
 }
 ```
 
+```{r, eval = FALSE}
+ipw_estimator_1 <- function(data, model) {
+  data %>% 
+    mutate(
+      prob = predict(model, newdata = data, type = 'response'),
+    ) %>% 
+    summarise(
+      EYB_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
+      EYA_ipw = mean(outcome*treatment / prob)
+    ) %>% 
+    mutate(ipw = EYA_ipw - EYB_ipw)
+}
+```
 
+```{r, echo = FALSE}
+mean_ipw_estimator_1 <- 
+  mean(nested_df$ipw)
+
+nested_df %>% 
+  ggplot(aes(x = simu_id, y = ipw)) +
+  ggtitle(paste('The mean of the ipw estimator is ', round(mean_ipw_estimator_1, 2))) + 
+  geom_point(color = 'blue') +
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
 ---
 
 # Strategy 2: Model the Outcome
@@ -407,7 +323,6 @@ outcome_model_estimator <- function(data) {
 }
 ```
 
-
 ---
 
 class: center
@@ -429,13 +344,33 @@ nested_df %>%
 
 # Outcome model could also fail
 
+- If the model for Y is incorrect, it would cause bias in the outcome model, which cause the mdoel to fail.
+
 ```{r, eval = FALSE}
-mean_outcome_model <- function(data) {
-  # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
+mean_outcome_model_1 <- function(data) {
+  # MISSING var_2??!?!
   glm(outcome ~ var_1 + treatment, data = data)
 }
 ```
 
+```{r, eval = FALSE}
+outcome_model_estimator_1 <- function(data) {
+   mean_model <- mean_outcome_model_1(data)
+   summary(mean_model)$coefficients['treatment', ][1]
+}
+```
+
+```{r}
+mean_model_estimator_1 <- 
+  mean(nested_df$model_estimate)
+
+nested_df %>% 
+  ggplot(aes(x = simu_id, y = model_estimate)) +
+  ggtitle(paste('The mean of the model estimate is ', round(mean_model_estimator_1, 2))) + 
+  geom_point(color = 'blue') +
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
 ---
 
 # Combining Strategy 1 and 2
@@ -469,9 +404,7 @@ mean_outcome_model <- function(data) {
 
 # Combining Strategy 1 and 2 - Doubly Robust Estimator
 
-$$\hat{\delta}_{DR} = $$
-
-$$\frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{\pi(X_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{1-\pi(X_{i})}\bigg]$$
+$$\hat{\delta}_{DR} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{\pi(X_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{1-\pi(X_{i})}\bigg]$$
 
 where $$\mu(X, A) = \hat{\alpha}_0 + \hat{\alpha}_1 X_1 + \hat{\alpha}_2 X_2 +\hat{\delta} A$$
 
