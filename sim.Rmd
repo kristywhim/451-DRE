@@ -41,12 +41,28 @@ prop_score_model <- function(data) {
 ```
 
 ```{r, include=FALSE}
+prop_score_model_w <- function(data) {
+  # OOPS! I forgot var_2
+  glm(treatment ~ var_1, data = data, family = 'binomial')
+}
+```
+
+```{r, include=FALSE}
 mean_outcome_model <- function(data) {
   glm(outcome ~ treatment + var_1 + var_2, data = data)
 }
 ```
 
+```{r, include = FALSE}
+mean_outcome_model_w <- function(data) {
+  # MISSING var_2??!?!
+  glm(outcome ~ var_1 + treatment, data = data)
+}
+```
+
+
 ```{r, include=FALSE}
+#IPW correct
 ipw_estimator <- function(data, model) {
   data %>% 
     mutate(
@@ -57,6 +73,21 @@ ipw_estimator <- function(data, model) {
       EY1_ipw = mean(outcome*treatment / prob)
     ) %>% 
     mutate(ipw = EY1_ipw - EY0_ipw)
+}
+```
+
+```{r, include = FALSE}
+# IPW wrong
+ipw_estimator_w <- function(data, model) {
+  data %>% 
+    mutate(
+      prob = predict(model, newdata = data, type = 'response'),
+    ) %>% 
+    summarise(
+      EYB_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
+      EYA_ipw = mean(outcome*treatment / prob)
+    ) %>% 
+    mutate(ipw_w = EYA_ipw - EYB_ipw)
 }
 ```
 
@@ -72,9 +103,18 @@ naive_estimator <- function(data) {
 ```
 
 ```{r, include=FALSE}
+#REG correct
 outcome_model_estimator <- function(data) {
    mean_model <- mean_outcome_model(data) # Compute the model
    summary(mean_model)$coefficients['treatment', ][1] # Coefficient for treatment
+}
+```
+
+```{r, include = FALSE}
+# REG wrong
+outcome_model_estimator_w <- function(data) {
+   mean_model <- mean_outcome_model_w(data)
+   summary(mean_model)$coefficients['treatment', ][1]
 }
 ```
 
@@ -104,14 +144,18 @@ nested_df <-
   nest() %>% 
   mutate(
     prop_model     = map(data, prop_score_model),
+    prop_model_w   = map(data, prop_score_model_w),
     mean_model     = map(data, mean_outcome_model),
+    mean_model_w   = map(data, mean_outcome_model_w),
     naive_estimate = map(data, naive_estimator),
     model_estimate = map(data, outcome_model_estimator),
+    model_estimate_w = map(data, outcome_model_estimator_w),
     ipw_estimate   = map2(data, prop_model, ipw_estimator),
+    ipw_estimate_w = map2(data, prop_model_w, ipw_estimator_w),
     dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
   ) %>% 
   ungroup() %>% 
-  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+  unnest(c(naive_estimate, model_estimate, model_estimate_w, ipw_estimate, ipw_estimate_w, dr_estimate))
 ```
 
 
@@ -171,18 +215,18 @@ $$E[Y|A] - E[Y|B] \neq E[Y(A)] - E[Y(B)]$$
 --
 
 ```{r simu_observational_data, eval = FALSE}
-simu_observational_data <- function(n_obs) {
-  X_1    <- rnorm(n_obs)
-  X_2    <- rnorm(n_obs)
-  XB     <- 0.25*X_1 + 0.25*X_2
-  prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
-  A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
-  
-  # The causal effect of receiving A is 10
-  Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs)  
-  
-  data.frame(var_1 = X_1, var_2 = X_2, treatment = A, outcome = Y)  
-} 
+# simu_observational_data <- function(n_obs) {
+#   X_1    <- rnorm(n_obs)
+#   X_2    <- rnorm(n_obs)
+#   XB     <- 0.25*X_1 + 0.25*X_2
+#   prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
+#   A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
+#   
+#   # The causal effect of receiving A is 10
+#   Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs)  
+#   
+#   data.frame(var_1 = X_1, var_2 = X_2, treatment = A, outcome = Y)  
+# } 
 ```
 
 - In this case $\delta = E[Y(A)] - E[Y(B)] = 10$
@@ -268,38 +312,22 @@ nested_df %>%
 
 - If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail.
 
-```{r, eval = FALSE}
-prop_score_model_1 <- function(data) {
-  # OOPS! I forgot var_2
-  glm(treatment ~ var_1, data = data, family = 'binomial')
-}
-```
-
-```{r, eval = FALSE}
-ipw_estimator_1 <- function(data, model) {
-  data %>% 
-    mutate(
-      prob = predict(model, newdata = data, type = 'response'),
-    ) %>% 
-    summarise(
-      EYB_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
-      EYA_ipw = mean(outcome*treatment / prob)
-    ) %>% 
-    mutate(ipw = EYA_ipw - EYB_ipw)
-}
-```
 
 ```{r, echo = FALSE}
-mean_ipw_estimator_1 <- 
-  mean(nested_df$ipw)
+mean_ipw_estimator_w <- 
+  mean(nested_df$ipw_w)
 
 nested_df %>% 
-  ggplot(aes(x = simu_id, y = ipw)) +
-  ggtitle(paste('The mean of the ipw estimator is ', round(mean_ipw_estimator_1, 2))) + 
+  ggplot(aes(x = simu_id, y = ipw_w)) +
+  ggtitle(paste('The mean of the ipw estimator (wrongly specified) is ', round(mean_ipw_estimator_w, 2))) + 
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
 ```
+
+
+We overestimated the true ACE (which is 10) if we wrongly specified the model form in IPW setting.
+
 ---
 
 # Strategy 2: Model the Outcome
@@ -340,37 +368,33 @@ nested_df %>%
   theme_bw()
 ```
 
+
+
 ---
 
 # Outcome model could also fail
 
 - If the model for Y is incorrect, it would cause bias in the outcome model, which cause the mdoel to fail.
 
-```{r, eval = FALSE}
-mean_outcome_model_1 <- function(data) {
-  # MISSING var_2??!?!
-  glm(outcome ~ var_1 + treatment, data = data)
-}
-```
-
-```{r, eval = FALSE}
-outcome_model_estimator_1 <- function(data) {
-   mean_model <- mean_outcome_model_1(data)
-   summary(mean_model)$coefficients['treatment', ][1]
-}
-```
 
 ```{r}
-mean_model_estimator_1 <- 
-  mean(nested_df$model_estimate)
+mean_model_estimator_w <- 
+  mean(nested_df$model_estimate_w)
 
 nested_df %>% 
-  ggplot(aes(x = simu_id, y = model_estimate)) +
-  ggtitle(paste('The mean of the model estimate is ', round(mean_model_estimator_1, 2))) + 
+  ggplot(aes(x = simu_id, y = model_estimate_w)) +
+  ggtitle(paste('The mean of the model estimate is ', round(mean_model_estimator_w, 2))) + 
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
 ```
+
+We also overestimated the true ACE (10) if our REG model is misspecified.
+
+
+
+
+
 ---
 
 # Combining Strategy 1 and 2
