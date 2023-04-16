@@ -5,7 +5,36 @@ description: |
 ---
 
 # Pre DRE: Two common adjusting methods {#reg-ipw}
+  Previously, we talked about two commonly used approaches for estimating ACE: **outcome regression estimator (REG)** and **Inverse-Probability Weighting (IPW)**. When using outcome regression and IPW to estimate a causal effect, both methods are unbiased only if the statistical model is correctly specified- this requires our knowledge of predictors and guessing their associations with outcome correctly (which can be really difficult and impractical!). Let’s take a look at how they work.
 
 ## Outcome regression (REG)
+  The central idea about Outcome Regression Estimator (REG) is to cut off all non-causal paths between treatment variable **A** to outcome variable **Y** by applying the idea of Markov Assumption and D-separation in the causal graph (also known as directed acyclic graph, DAG).
+  Outcome regression estimator is a statistical method used to estimate the relationship between treatment variables (**A**) and the outcome variable (**Y**). The outcome regression estimator can be used to make predictions about the outcome variable based on the values of the treatment variables, and it can also be used to test hypotheses about the relationship between the treatment variables and the outcome variable.
+  Through the Causal Markov Assumption the D-separation, the distributions of A and Y conditional on confounder set **Z** are conditionally independent. In this way, we successfully block association flow along non-causal paths because we have controlled the study units to share same values of **Z** before we compare them. This also means we have achieved conditionally exchangeability of the outcomes Y across treatment groups A. Therefore, now we are able to inspect within the subset of the data defined by Z and compare the average outcome (probability of Y) between the treatment groups A.
+  The mathematical formula expressing the REG model is: where we fit a linear regression on A and Z, $\beta_1$ will then become our estimation on average causal effect (ACE): it represents the change in the expected value of outcome **Y** when we compare a treatment unit to a control unit, assuming they share the same **Z** value.
+$$
+E[Y|A,Z]=beta_0+beta_1A+\beta_2Z\\
+\hat \beta_1=E[Y|A=1,Z]-E[Y|A=0,Z]=E[Y^{a=1}|Z]-E[Y^{a=0}|Z]
+$$
+By calculating Yi for each observation in every treatment condition, $A=1$ and $A=0$, we get the sample mean of outcome $E[Y^{A=a}]$: 
+$$
+E[Y^{A=a}]=\frac{1}{n} \sum_{i=1}^n \hat Y_i
+$$
+When **Z** is both correctly identified and modeled, this is an unbiased estimate of the mean potential outcome had the entire population received treatment for all people (so both treatment and control groups).
 
 ## Inverse Probability Weighting (IPW)
+  The central idea about IPW is to cut off the relationship between potential confounders **Z** to treatment variable **A** by reconstructing *“pseudo population”* from the data we have.
+  Inverse probability weighting (IPW) relies on the idea of building a logistic regression model that can be used to estimate the probability of being a treatment/ control unit observed for a particular observation (assuming that the confounders have been controlled). This predicted probability (after being converted from the output of the logistic regression model) is called **propensity score** in subsequent analyses. IPW is unique in measuring average causal effect by removing confounding variables using these weights.
+  This method is used under non-randomized trials (where the randomized trials are seen as the “gold standard” in causal studies): the number of people receiving treatment and control are not equal. As groups are imbalanced, we want to create a “pseudo-population” where half are treated and half are not treated. 
+  This is achieved by re-weighting outcomes so that they reflect the global distribution of population sizes and help us to remove non-causal paths, thus leading to unbiased comparison. The **weight** for a particular **Z** group is the inverse of the **propensity score**, the probability of being assigned to the treatment/ control group, given patients attributes (**Z**).
+$$
+Weight_{a=1}=\frac{1}{P(A=1|Z)}=\frac{1}{\widehat {PS_i}}
+Weight_{a=0}=\frac{1}{P(A=0|Z)}=\frac{1}{1-\widehat {PS_i}}
+$$
+This intuition can be reflected in the formula, where we adjust the formula by multiplying the propensity score, we end up getting the **inverse probability weighting (IPW)** formula:
+$$
+P(Y|A=a)=\sum_{i=1}^n P(Y|A=a, Z)P(Z)\\
+E[Y^{a=1}]=\frac{1}{n}\sum_{i=1}^n(\frac {E[Y_i|A=1]}{\widehat{PS_i}})\\
+E[Y^{a=0}]=\frac{1}{n}\sum_{i=1}^n(\frac {E[Y_i|A=0]}{1-\widehat{PS_i}})\\
+ACE=E[Y^{a=1}]-E[Y^{a=0}]
+$$
