@@ -6,6 +6,16 @@ description: |
 
 # Computational Simulation {#sim}
 
+- *Goal*: estimate a causal effect when you do not have data from a randomized experiment 
+
+- *Strategy 1*: Re-weighting each observation by the probability of receiving A or B so that the data approximates a randomized experiment 
+
+- *Strategy 2*: Modelling the outcome directly with a linear regression
+
+- *Combining Idea 1 and 2*: To form doubly robust estimator
+
+---
+
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE, 
         fig.align = "center")
@@ -17,51 +27,44 @@ library(ggplot2)
 library(knitr)
 ```
 
-```{r, include=FALSE}
+# Setting up data
+
+We assign $X_1$ and $X_2$ as causal variables, and define a true ACE of 10.
+
+```{r setting-up}
 simu_observational_data <- function(simu_id = 1, n_obs) {
   X_1    <- rnorm(n_obs)
   X_2    <- rnorm(n_obs)
   XB     <- 0.2*X_1 + 0.2*X_2
-  prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
-  A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
+  prob_A <- exp(XB) / (1 + exp(XB))
+  A      <- rbinom(n_obs, 1, prob_A)
   
-  # The causal effect of receiving A is 10
-  Y      <- 100 + 2*X_1 + 2*X_2 + 10*A + rnorm(n_obs) 
+  # The causal effect of treatment A is 10
+  Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs) 
   
+  # summarize variables into a data frame
   data.frame(simu_id = simu_id, n_obs = n_obs, 
              var_1 = X_1, var_2 = X_2, 
              treatment = A, outcome = Y)  
 } 
 ```
 
-```{r, include=FALSE}
+## IPW model
+
+```{r}
 prop_score_model <- function(data) {
   glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
 }
 ```
 
-```{r, include=FALSE}
+```{r}
 prop_score_model_w <- function(data) {
   # OOPS! I forgot var_2
   glm(treatment ~ var_1, data = data, family = 'binomial')
 }
 ```
 
-```{r, include=FALSE}
-mean_outcome_model <- function(data) {
-  glm(outcome ~ treatment + var_1 + var_2, data = data)
-}
-```
-
-```{r, include = FALSE}
-mean_outcome_model_w <- function(data) {
-  # MISSING var_2??!?!
-  glm(outcome ~ var_1 + treatment, data = data)
-}
-```
-
-
-```{r, include=FALSE}
+```{r}
 #IPW correct
 ipw_estimator <- function(data, model) {
   data %>% 
@@ -76,7 +79,7 @@ ipw_estimator <- function(data, model) {
 }
 ```
 
-```{r, include = FALSE}
+```{r}
 # IPW wrong
 ipw_estimator_w <- function(data, model) {
   data %>% 
@@ -91,18 +94,22 @@ ipw_estimator_w <- function(data, model) {
 }
 ```
 
-```{r, include=FALSE}
-naive_estimator <- function(data) {
-  data %>% 
-    summarise(
-      EY0_naive = mean(outcome*(1 - treatment)),
-      EY1_naive = mean(outcome*treatment)
-    ) %>% 
-    mutate(naive_estimator = EY1_naive- EY0_naive)
+## REG model
+
+```{r}
+mean_outcome_model <- function(data) {
+  glm(outcome ~ treatment + var_1 + var_2, data = data)
 }
 ```
 
-```{r, include=FALSE}
+```{r}
+mean_outcome_model_w <- function(data) {
+  # MISSING var_2??!?!
+  glm(outcome ~ var_1 + treatment, data = data)
+}
+```
+
+```{r}
 #REG correct
 outcome_model_estimator <- function(data) {
    mean_model <- mean_outcome_model(data) # Compute the model
@@ -110,7 +117,7 @@ outcome_model_estimator <- function(data) {
 }
 ```
 
-```{r, include = FALSE}
+```{r}
 # REG wrong
 outcome_model_estimator_w <- function(data) {
    mean_model <- mean_outcome_model_w(data)
@@ -118,7 +125,9 @@ outcome_model_estimator_w <- function(data) {
 }
 ```
 
-```{r, include=FALSE}
+## DRE estimator
+
+```{r}
 dr_estimator <- function(data, prop_model, mean_model) {
   data %>% 
     mutate(
@@ -131,6 +140,17 @@ dr_estimator <- function(data, prop_model, mean_model) {
       EY1_dr = mean((outcome*treatment - augm) / prob)
     ) %>% 
     mutate(dre = EY1_dr - EY0_dr)
+}
+```
+
+```{r, include=FALSE}
+naive_estimator <- function(data) {
+  data %>% 
+    summarise(
+      EY0_naive = mean(outcome*(1 - treatment)),
+      EY1_naive = mean(outcome*treatment)
+    ) %>% 
+    mutate(naive_estimator = EY1_naive- EY0_naive)
 }
 ```
 
@@ -158,88 +178,14 @@ nested_df <-
   unnest(c(naive_estimate, model_estimate, model_estimate_w, ipw_estimate, ipw_estimate_w, dr_estimate))
 ```
 
+Now, we have five models: IPW (both correct and incorrect), REG (both correct and incorrect), and DRE.
 
 ---
 
-# What is Causal Inference in Data Science?
-
-
-- A/B tests are great at allowing us to reach causal claims
-
-- Will A or B cause a *better* outcome? (i.e, will A cause a bigger client retention than B)
-
-- Sometimes we have data on A and B but not generated through a random experiment
-
-- Relying solely on this data won't allow you to make correct causal claims about A and B 
-
-- We can use causal inference methods to try to estimate the causal effect of using A versus B even from a non random experiment
-
----
-
-# What is this talk about?
-
-- *Goal*: estimate a causal effect when you do not have data from a randomized experiment 
-
-- *Strategy 1*: Re-weighting each observation by the probability of receiving A or B so that the data approximates a randomized experiment 
-
-- *Strategy 2*: Modelling the outcome directly with a linear regression
-
-- *Combining Idea 1 and 2*: To form doubly robust estimator
-
----
-
-# What is a causal effect?
-
-**Conterfactual difference**: On average receiving treatment $A$ compared to $B$ will cause a difference in the outcome of $\delta$
-
-$$\delta = E[Y(A)] - E[Y(B)]$$
-
-where $Y(A)$ is the outcome if treatment $A$ had been received, and $Y(B)$ is the outcome if treatment $B$ had been received.
-
-**Mean difference**: The average difference in outcomes between those receiving $A$ and $B$
-
-$$E[Y|A] - E[Y|B]$$
-
-- In an A/B test we can estimate the causal effect $\delta$ by a simple difference of means because of randomization
-
-$$E[Y|A] - E[Y|B] = E[Y(A)] - E[Y(B)]$$
-
-- In non randomized data this is not necessarily true
-
-$$E[Y|A] - E[Y|B] \neq E[Y(A)] - E[Y(B)]$$
-
----
-
-# A non randomized data simulation
-
---
-
-```{r simu_observational_data, eval = FALSE}
-# simu_observational_data <- function(n_obs) {
-#   X_1    <- rnorm(n_obs)
-#   X_2    <- rnorm(n_obs)
-#   XB     <- 0.25*X_1 + 0.25*X_2
-#   prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
-#   A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
-#   
-#   # The causal effect of receiving A is 10
-#   Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs)  
-#   
-#   data.frame(var_1 = X_1, var_2 = X_2, treatment = A, outcome = Y)  
-# } 
-```
-
-- In this case $\delta = E[Y(A)] - E[Y(B)] = 10$
-
-- Unlike a random experiment, the probability of receiving treatment *A* depends on *X_1* and *X_2*
-
-- This makes it difficult to to estimate the causal effect
-
-
-# Strategy 1: Inverse Probability Weighting
+# Strategy 1: Inverse Probability Weighting (IPW)
 ## Intuition Behind it
 
---
+---
 
 - In an experiment the probability of receiving a treatment are always equal across all units (i.e., 50%)
 
@@ -249,13 +195,9 @@ $$E[Y|A] - E[Y|B] \neq E[Y(A)] - E[Y(B)]$$
 
 - In the re-weighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up
 
----
+- Reminder: propensity score is just a logistic regression of the probability of receiving the treatment
 
-# Strategy 1: Inverse Probability Weighting - Propensity Score
-
-- How do we estimate these probabilities? 
-
-- The propensity score is just a logistic regression of the probability of receiving the treatment
+In our example, we proposed the
 
 ```{r, eval = FALSE}
 prop_score_model <- function(data) {
@@ -263,11 +205,9 @@ prop_score_model <- function(data) {
 }
 ```
 
-- It is just a fancy name for logistic regression to sound smart at conferences!
-
 ---
 
-# Strategy 1: IPW Estimator
+# Strategy 1: IPW estimator
 
 - Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment
 
@@ -300,7 +240,7 @@ mean_ipw_estimator <-
 
 nested_df %>% 
   ggplot(aes(x = simu_id, y = ipw)) +
-  ggtitle(paste('The mean of the ipw estimator is ', round(mean_ipw_estimator, 2))) + 
+  ggtitle(paste('The mean of the ipw estimate (correctly specified) is ', round(mean_ipw_estimator, 2))) + 
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
@@ -319,7 +259,7 @@ mean_ipw_estimator_w <-
 
 nested_df %>% 
   ggplot(aes(x = simu_id, y = ipw_w)) +
-  ggtitle(paste('The mean of the ipw estimator (wrongly specified) is ', round(mean_ipw_estimator_w, 2))) + 
+  ggtitle(paste('The mean of the ipw estimate (incorrectly specified) is ', round(mean_ipw_estimator_w, 2))) + 
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
@@ -330,7 +270,7 @@ We overestimated the true ACE (which is 10) if we wrongly specified the model fo
 
 ---
 
-# Strategy 2: Model the Outcome
+# Strategy 2: REG estimator (model the outcome)
 
 - Default strategy of data scientist would be to create a linear model
 
@@ -362,7 +302,7 @@ mean_model_estimator <-
 
 nested_df %>% 
   ggplot(aes(x = simu_id, y = model_estimate)) +
-  ggtitle(paste('The mean of the model estimate is ', round(mean_model_estimator, 2))) + 
+  ggtitle(paste('The mean of the REG estimate (correctly specified) is ', round(mean_model_estimator, 2))) + 
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
@@ -372,10 +312,9 @@ nested_df %>%
 
 ---
 
-# Outcome model could also fail
+# REG model could also fail
 
-- If the model for Y is incorrect, it would cause bias in the outcome model, which cause the mdoel to fail.
-
+- If the model for Y is incorrect (as we recalled we left *var_2* out), it would cause bias in the REG outcome model, which cause the model to fail.
 
 ```{r}
 mean_model_estimator_w <- 
@@ -383,16 +322,13 @@ mean_model_estimator_w <-
 
 nested_df %>% 
   ggplot(aes(x = simu_id, y = model_estimate_w)) +
-  ggtitle(paste('The mean of the model estimate is ', round(mean_model_estimator_w, 2))) + 
+  ggtitle(paste('The mean of the REG estimate (incorrectly specified) is ', round(mean_model_estimator_w, 2))) + 
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
 ```
 
-We also overestimated the true ACE (10) if our REG model is misspecified.
-
-
-
+We also overestimated the true ACE (10) if our REG model is mis-specified.
 
 
 ---

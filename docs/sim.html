@@ -2129,17 +2129,6 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
 <div class="d-article">
 <h1 id="sim">Computational Simulation</h1>
-<hr />
-<h1 id="what-is-causal-inference-in-data-science">What is Causal Inference in Data Science?</h1>
-<ul>
-<li><p>A/B tests are great at allowing us to reach causal claims</p></li>
-<li><p>Will A or B cause a <em>better</em> outcome? (i.e, will A cause a bigger client retention than B)</p></li>
-<li><p>Sometimes we have data on A and B but not generated through a random experiment</p></li>
-<li><p>Relying solely on this data won’t allow you to make correct causal claims about A and B</p></li>
-<li><p>We can use causal inference methods to try to estimate the causal effect of using A versus B even from a non random experiment</p></li>
-</ul>
-<hr />
-<h1 id="what-is-this-talk-about">What is this talk about?</h1>
 <ul>
 <li><p><em>Goal</em>: estimate a causal effect when you do not have data from a randomized experiment</p></li>
 <li><p><em>Strategy 1</em>: Re-weighting each observation by the probability of receiving A or B so that the data approximates a randomized experiment</p></li>
@@ -2147,59 +2136,28 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li><p><em>Combining Idea 1 and 2</em>: To form doubly robust estimator</p></li>
 </ul>
 <hr />
-<h1 id="what-is-a-causal-effect">What is a causal effect?</h1>
-<p><strong>Conterfactual difference</strong>: On average receiving treatment <span class="math inline">\(A\)</span> compared to <span class="math inline">\(B\)</span> will cause a difference in the outcome of <span class="math inline">\(\delta\)</span></p>
-<p><span class="math display">\[\delta = E[Y(A)] - E[Y(B)]\]</span></p>
-<p>where <span class="math inline">\(Y(A)\)</span> is the outcome if treatment <span class="math inline">\(A\)</span> had been received, and <span class="math inline">\(Y(B)\)</span> is the outcome if treatment <span class="math inline">\(B\)</span> had been received.</p>
-<p><strong>Mean difference</strong>: The average difference in outcomes between those receiving <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span></p>
-<p><span class="math display">\[E[Y|A] - E[Y|B]\]</span></p>
-<ul>
-<li>In an A/B test we can estimate the causal effect <span class="math inline">\(\delta\)</span> by a simple difference of means because of randomization</li>
-</ul>
-<p><span class="math display">\[E[Y|A] - E[Y|B] = E[Y(A)] - E[Y(B)]\]</span></p>
-<ul>
-<li>In non randomized data this is not necessarily true</li>
-</ul>
-<p><span class="math display">\[E[Y|A] - E[Y|B] \neq E[Y(A)] - E[Y(B)]\]</span></p>
-<hr />
-<h1 id="a-non-randomized-data-simulation">A non randomized data simulation</h1>
-<p>–</p>
+<h1 id="setting-up-data">Setting up data</h1>
+<p>We assign <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> as causal variables, and define a true ACE of 10.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
-<pre class="sourceCode r"><code class="sourceCode r"><span><span class='co'># simu_observational_data &lt;- function(n_obs) {</span></span>
-<span><span class='co'>#   X_1    &lt;- rnorm(n_obs)</span></span>
-<span><span class='co'>#   X_2    &lt;- rnorm(n_obs)</span></span>
-<span><span class='co'>#   XB     &lt;- 0.25*X_1 + 0.25*X_2</span></span>
-<span><span class='co'>#   prob_A &lt;- exp(XB) / (1 + exp(XB)) # This is not an A/B test!</span></span>
-<span><span class='co'>#   A      &lt;- rbinom(n_obs, 1, prob_A) # This is not an A/B test!</span></span>
-<span><span class='co'>#   </span></span>
-<span><span class='co'>#   # The causal effect of receiving A is 10</span></span>
-<span><span class='co'>#   Y      &lt;- 100 + X_1 + X_2 + 10*A + rnorm(n_obs)  </span></span>
-<span><span class='co'>#   </span></span>
-<span><span class='co'>#   data.frame(var_1 = X_1, var_2 = X_2, treatment = A, outcome = Y)  </span></span>
-<span><span class='co'># } </span></span></code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>simu_observational_data</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>simu_id</span> <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>n_obs</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='va'>X_1</span>    <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span></span>
+<span>  <span class='va'>X_2</span>    <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span></span>
+<span>  <span class='va'>XB</span>     <span class='op'>&lt;-</span> <span class='fl'>0.2</span><span class='op'>*</span><span class='va'>X_1</span> <span class='op'>+</span> <span class='fl'>0.2</span><span class='op'>*</span><span class='va'>X_2</span></span>
+<span>  <span class='va'>prob_A</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span><span class='op'>(</span><span class='va'>XB</span><span class='op'>)</span> <span class='op'>/</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span><span class='op'>(</span><span class='va'>XB</span><span class='op'>)</span><span class='op'>)</span></span>
+<span>  <span class='va'>A</span>      <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Binomial.html'>rbinom</a></span><span class='op'>(</span><span class='va'>n_obs</span>, <span class='fl'>1</span>, <span class='va'>prob_A</span><span class='op'>)</span></span>
+<span>  </span>
+<span>  <span class='co'># The causal effect of treatment A is 10</span></span>
+<span>  <span class='va'>Y</span>      <span class='op'>&lt;-</span> <span class='fl'>100</span> <span class='op'>+</span> <span class='va'>X_1</span> <span class='op'>+</span> <span class='va'>X_2</span> <span class='op'>+</span> <span class='fl'>10</span><span class='op'>*</span><span class='va'>A</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span> </span>
+<span>  </span>
+<span>  <span class='co'># summarize variables into a data frame</span></span>
+<span>  <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>simu_id <span class='op'>=</span> <span class='va'>simu_id</span>, n_obs <span class='op'>=</span> <span class='va'>n_obs</span>, </span>
+<span>             var_1 <span class='op'>=</span> <span class='va'>X_1</span>, var_2 <span class='op'>=</span> <span class='va'>X_2</span>, </span>
+<span>             treatment <span class='op'>=</span> <span class='va'>A</span>, outcome <span class='op'>=</span> <span class='va'>Y</span><span class='op'>)</span>  </span>
+<span><span class='op'>}</span> </span></code></pre>
 </div>
 </div>
-<ul>
-<li><p>In this case <span class="math inline">\(\delta = E[Y(A)] - E[Y(B)] = 10\)</span></p></li>
-<li><p>Unlike a random experiment, the probability of receiving treatment <em>A</em> depends on <em>X_1</em> and <em>X_2</em></p></li>
-<li><p>This makes it difficult to to estimate the causal effect</p></li>
-</ul>
-<h1 id="strategy-1-inverse-probability-weighting">Strategy 1: Inverse Probability Weighting</h1>
-<h2 id="intuition-behind-it">Intuition Behind it</h2>
-<p>–</p>
-<ul>
-<li><p>In an experiment the probability of receiving a treatment are always equal across all units (i.e., 50%)</p></li>
-<li><p>In the current case, the probability of receiving the treatment depends on variables that affect the outcome</p></li>
-<li><p>If we knew what this probabilities are we could re-weight our sample such that the data would better match a randomized experiment</p></li>
-<li><p>In the re-weighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up</p></li>
-</ul>
-<hr />
-<h1 id="strategy-1-inverse-probability-weighting---propensity-score">Strategy 1: Inverse Probability Weighting - Propensity Score</h1>
-<ul>
-<li><p>How do we estimate these probabilities?</p></li>
-<li><p>The propensity score is just a logistic regression of the probability of receiving the treatment</p></li>
-</ul>
+<h2 id="ipw-model">IPW model</h2>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>prop_score_model</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
@@ -2207,11 +2165,120 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <span><span class='op'>}</span></span></code></pre>
 </div>
 </div>
-<ul>
-<li>It is just a fancy name for logistic regression to sound smart at conferences!</li>
-</ul>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>prop_score_model_w</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='co'># OOPS! I forgot var_2</span></span>
+<span>  <span class='fu'><a href='https://rdrr.io/r/stats/glm.html'>glm</a></span><span class='op'>(</span><span class='va'>treatment</span> <span class='op'>~</span> <span class='va'>var_1</span>, data <span class='op'>=</span> <span class='va'>data</span>, family <span class='op'>=</span> <span class='st'>'binomial'</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='co'>#IPW correct</span></span>
+<span><span class='va'>ipw_estimator</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>model</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='va'>data</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span></span>
+<span>      prob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>model</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>'response'</span><span class='op'>)</span>,</span>
+<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarise</a></span><span class='op'>(</span></span>
+<span>      EY0_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>treatment</span><span class='op'>)</span> <span class='op'>/</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span>      EY1_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='va'>treatment</span> <span class='op'>/</span> <span class='va'>prob</span><span class='op'>)</span></span>
+<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>ipw <span class='op'>=</span> <span class='va'>EY1_ipw</span> <span class='op'>-</span> <span class='va'>EY0_ipw</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='co'># IPW wrong</span></span>
+<span><span class='va'>ipw_estimator_w</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>model</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='va'>data</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span></span>
+<span>      prob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>model</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>'response'</span><span class='op'>)</span>,</span>
+<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarise</a></span><span class='op'>(</span></span>
+<span>      EYB_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>treatment</span><span class='op'>)</span> <span class='op'>/</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span>      EYA_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='va'>treatment</span> <span class='op'>/</span> <span class='va'>prob</span><span class='op'>)</span></span>
+<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>ipw_w <span class='op'>=</span> <span class='va'>EYA_ipw</span> <span class='op'>-</span> <span class='va'>EYB_ipw</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<h2 id="reg-model">REG model</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>mean_outcome_model</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='fu'><a href='https://rdrr.io/r/stats/glm.html'>glm</a></span><span class='op'>(</span><span class='va'>outcome</span> <span class='op'>~</span> <span class='va'>treatment</span> <span class='op'>+</span> <span class='va'>var_1</span> <span class='op'>+</span> <span class='va'>var_2</span>, data <span class='op'>=</span> <span class='va'>data</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>mean_outcome_model_w</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='co'># MISSING var_2??!?!</span></span>
+<span>  <span class='fu'><a href='https://rdrr.io/r/stats/glm.html'>glm</a></span><span class='op'>(</span><span class='va'>outcome</span> <span class='op'>~</span> <span class='va'>var_1</span> <span class='op'>+</span> <span class='va'>treatment</span>, data <span class='op'>=</span> <span class='va'>data</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='co'>#REG correct</span></span>
+<span><span class='va'>outcome_model_estimator</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>   <span class='va'>mean_model</span> <span class='op'>&lt;-</span> <span class='fu'>mean_outcome_model</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='co'># Compute the model</span></span>
+<span>   <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>mean_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>coefficients</span><span class='op'>[</span><span class='st'>'treatment'</span>, <span class='op'>]</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='co'># Coefficient for treatment</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='co'># REG wrong</span></span>
+<span><span class='va'>outcome_model_estimator_w</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>   <span class='va'>mean_model</span> <span class='op'>&lt;-</span> <span class='fu'>mean_outcome_model_w</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span></span>
+<span>   <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>mean_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>coefficients</span><span class='op'>[</span><span class='st'>'treatment'</span>, <span class='op'>]</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<h2 id="dre-estimator">DRE estimator</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>dr_estimator</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_model</span>, <span class='va'>mean_model</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='va'>data</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span></span>
+<span>      prob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>prop_model</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>'response'</span><span class='op'>)</span>,</span>
+<span>      pred <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>mean_model</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>'response'</span><span class='op'>)</span>,</span>
+<span>      augm <span class='op'>=</span> <span class='op'>(</span><span class='va'>treatment</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>*</span><span class='va'>pred</span></span>
+<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarise</a></span><span class='op'>(</span></span>
+<span>      EY0_dr <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>treatment</span><span class='op'>)</span> <span class='op'>-</span> <span class='va'>augm</span><span class='op'>)</span> <span class='op'>/</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span>      EY1_dr <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='va'>treatment</span> <span class='op'>-</span> <span class='va'>augm</span><span class='op'>)</span> <span class='op'>/</span> <span class='va'>prob</span><span class='op'>)</span></span>
+<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>dre <span class='op'>=</span> <span class='va'>EY1_dr</span> <span class='op'>-</span> <span class='va'>EY0_dr</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<p>Now, we have five models: IPW (both correct and incorrect), REG (both correct and incorrect), and DRE.</p>
 <hr />
-<h1 id="strategy-1-ipw-estimator">Strategy 1: IPW Estimator</h1>
+<h1 id="strategy-1-inverse-probability-weighting-ipw">Strategy 1: Inverse Probability Weighting (IPW)</h1>
+<h2 id="intuition-behind-it">Intuition Behind it</h2>
+<hr />
+<ul>
+<li><p>In an experiment the probability of receiving a treatment are always equal across all units (i.e., 50%)</p></li>
+<li><p>In the current case, the probability of receiving the treatment depends on variables that affect the outcome</p></li>
+<li><p>If we knew what this probabilities are we could re-weight our sample such that the data would better match a randomized experiment</p></li>
+<li><p>In the re-weighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up</p></li>
+<li><p>Reminder: propensity score is just a logistic regression of the probability of receiving the treatment</p></li>
+</ul>
+<p>In our example, we proposed the</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>prop_score_model</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>  <span class='fu'><a href='https://rdrr.io/r/stats/glm.html'>glm</a></span><span class='op'>(</span><span class='va'>treatment</span> <span class='op'>~</span> <span class='va'>var_1</span> <span class='op'>+</span> <span class='va'>var_2</span>, data <span class='op'>=</span> <span class='va'>data</span>, family <span class='op'>=</span> <span class='st'>'binomial'</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
+<hr />
+<h1 id="strategy-1-ipw-estimator">Strategy 1: IPW estimator</h1>
 <ul>
 <li>Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment</li>
 </ul>
@@ -2236,7 +2303,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p>class: center
 # IPW Performance</p>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-15-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-14-1.png" width="624" /></p>
 </div>
 <hr />
 <h1 id="ipw-could-fail">IPW could fail</h1>
@@ -2244,11 +2311,11 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li>If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail.</li>
 </ul>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-16-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-15-1.png" width="624" /></p>
 </div>
 <p>We overestimated the true ACE (which is 10) if we wrongly specified the model form in IPW setting.</p>
 <hr />
-<h1 id="strategy-2-model-the-outcome">Strategy 2: Model the Outcome</h1>
+<h1 id="strategy-2-reg-estimator-model-the-outcome">Strategy 2: REG estimator (model the outcome)</h1>
 <ul>
 <li>Default strategy of data scientist would be to create a linear model</li>
 </ul>
@@ -2275,12 +2342,12 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p>class: center
 # Strategy 2: Performance - Simulation</p>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-19-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-18-1.png" width="624" /></p>
 </div>
 <hr />
-<h1 id="outcome-model-could-also-fail">Outcome model could also fail</h1>
+<h1 id="reg-model-could-also-fail">REG model could also fail</h1>
 <ul>
-<li>If the model for Y is incorrect, it would cause bias in the outcome model, which cause the mdoel to fail.</li>
+<li>If the model for Y is incorrect (as we recalled we left <em>var_2</em> out), it would cause bias in the REG outcome model, which cause the model to fail.</li>
 </ul>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
@@ -2289,14 +2356,14 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <span></span>
 <span><span class='va'>nested_df</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
 <span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='va'>simu_id</span>, y <span class='op'>=</span> <span class='va'>model_estimate_w</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span></span>
-<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='st'>'The mean of the model estimate is '</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>round</a></span><span class='op'>(</span><span class='va'>mean_model_estimator_w</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> </span>
+<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='st'>'The mean of the REG estimate (incorrectly specified) is '</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>round</a></span><span class='op'>(</span><span class='va'>mean_model_estimator_w</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> </span>
 <span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>color <span class='op'>=</span> <span class='st'>'blue'</span><span class='op'>)</span> <span class='op'>+</span></span>
 <span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_abline.html'>geom_hline</a></span><span class='op'>(</span>yintercept <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span> <span class='op'>+</span></span>
 <span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span><span class='op'>(</span><span class='op'>)</span></span></code></pre>
 </div>
-<p><img src="sim_files/figure-html5/unnamed-chunk-20-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-19-1.png" width="624" /></p>
 </div>
-<p>We also overestimated the true ACE (10) if our REG model is misspecified.</p>
+<p>We also overestimated the true ACE (10) if our REG model is mis-specified.</p>
 <hr />
 <h1 id="combining-strategy-1-and-2">Combining Strategy 1 and 2</h1>
 <p>–</p>
@@ -2352,7 +2419,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p>class: center
 # DRE Performance</p>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-22-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-21-1.png" width="624" /></p>
 </div>
 <hr />
 <h1 id="doubly-robust-estimator---propensity-score-is-incorrect">Doubly Robust Estimator - Propensity Score is Incorrect</h1>
@@ -2371,7 +2438,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
 </div>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-25-1.png" width="60%" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-24-1.png" width="60%" /></p>
 </div>
 <table style="width:6%;">
 <colgroup>
