@@ -25,6 +25,8 @@ library(tidyr)
 library(purrr)
 library(ggplot2)
 library(knitr)
+library(gridExtra)
+library(cowplot)
 ```
 
 # Setting up data
@@ -263,6 +265,17 @@ nested_df %>%
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
+
+```
+
+```{r}
+a <- ggplot(nested_df, aes(x=simu_id, y=ipw, group=1)) +
+  geom_boxplot()+
+  ylim(7, 13.5)
+b <- ggplot(nested_df, aes(x=simu_id, y=ipw_w, group=1))+
+  geom_boxplot()+
+  ylim(7, 13.5)
+plot_grid(a, b, labels=c("Correct IPW", "Incorrect IPW"), ncol = 2, nrow = 1)
 ```
 
 
@@ -326,6 +339,17 @@ nested_df %>%
   geom_point(color = 'blue') +
   geom_hline(yintercept = 10) +
   theme_bw()
+```
+
+```{r}
+c <- ggplot(nested_df, aes(x=simu_id, y=model_estimate, group=1)) +
+  geom_boxplot()+
+  ylim(9, 11)
+d <- ggplot(nested_df, aes(x=simu_id, y=model_estimate_w, group=1))+
+  geom_boxplot()+
+  ylim(9, 11)
+plot_grid(c, d, labels=c("Correct REG", "Incorrect REG"), ncol = 2, nrow = 1)
+```
 ```
 
 We also overestimated the true ACE (10) if our REG model is mis-specified.
