@@ -350,7 +350,6 @@ d <- ggplot(nested_df, aes(x=simu_id, y=model_estimate_w, group=1))+
   ylim(9, 11)
 plot_grid(c, d, labels=c("Correct REG", "Incorrect REG"), ncol = 2, nrow = 1)
 ```
-```
 
 We also overestimated the true ACE (10) if our REG model is mis-specified.
 
@@ -359,23 +358,13 @@ We also overestimated the true ACE (10) if our REG model is mis-specified.
 
 # Combining Strategy 1 and 2
 
---
-
 - If the propensity score model is incorrect, strategy 1 will not work
-
---
 
 - If the outcome model is incorrect, strategy 2 will not work
 
---
-
 - If you combine both approaches, you just need either one to work but not both
 
---
-
 - As a data scientist you have 1 out of 2 chances to get the correct answer
-
---
 
 - This is called the doubly robustness property
 
@@ -522,6 +511,72 @@ nested_om_df %>%
   geom_hline(yintercept = 10) +
   theme_bw()
 ```
+
+```{r}
+prop_score_model <- function(data) {
+  # OOPS! I forgot var_2
+  glm(treatment ~ var_1, data = data, family = 'binomial')
+}
+mean_outcome_model <- function(data) {
+  # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
+  glm(outcome ~ var_1 + treatment, data = data)
+}
+```
+
+---
+
+class: center
+# Doubly Robust Estimator - Propensity Score is Incorrect
+
+```{r, echo = FALSE}
+nested_bw_df <- 
+  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
+  group_by(simu_id) %>% 
+  nest() %>% 
+  mutate(
+    prop_model     = map(data, prop_score_model),
+    mean_model     = map(data, mean_outcome_model),
+    naive_estimate = map(data, naive_estimator),
+    model_estimate = map(data, outcome_model_estimator),
+    ipw_estimate   = map2(data, prop_model, ipw_estimator),
+    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
+  ) %>% 
+  ungroup() %>% 
+  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+```
+
+```{r, echo = FALSE, out.width="60%"}
+mean_dre_estimator <- 
+  mean(nested_bw_df$dre)
+
+nested_bw_df %>% 
+  ggplot(aes(x = simu_id, y = dre)) +
+  geom_point(color = 'red') +
+  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
+  geom_hline(yintercept = 10) +
+  theme_bw()
+```
+
+
+```{r}
+e <- ggplot(nested_pe_df, aes(x=simu_id, y=dre, group=1)) +
+  geom_boxplot()+
+  geom_hline(yintercept = 10, color='red')+
+  ylim(7,14)+
+  theme_bw()
+f <- ggplot(nested_om_df, aes(x=simu_id, y=dre, group=1))+
+  geom_boxplot()+
+  geom_hline(yintercept = 10, color='red')+
+  ylim(7,14)+
+  theme_bw()
+g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre, group=1))+
+  geom_boxplot()+
+  geom_hline(yintercept = 10, color='red')+
+  ylim(7,14)+
+  theme_bw()
+plot_grid(e, f, g, labels=c("Incorrect IPW", "Incorrect REG", "Both Incorrect"), ncol = 3, nrow = 1)
+```
+
 
 ---
 # Conclusion
