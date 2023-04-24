@@ -41,7 +41,7 @@ simu_observational_data <- function(simu_id = 1, n_obs) {
   prob_A <- exp(XB) / (1 + exp(XB))
   A      <- rbinom(n_obs, 1, prob_A)
   
-  # The causal effect of treatment A is 10
+  # We set the causal effect of treatment A is 10
   Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs) 
   
   # summarize variables into a data frame
@@ -53,12 +53,31 @@ simu_observational_data <- function(simu_id = 1, n_obs) {
 
 ## IPW model
 
+We create the correct model of IPW with both variables, $X_1$ and $X_2$.
 ```{r}
 prop_score_model <- function(data) {
   glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
 }
 ```
 
+```{r}
+#IPW estimator is correct
+ipw_estimator <- function(data, model) {
+  data %>% 
+    mutate(
+      prob = predict(model, newdata = data, type = 'response'),
+    ) %>% 
+    summarise(
+      # Calculate expected value for both treatment and non-treatment using IPW equation
+      EY0_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
+      EY1_ipw = mean(outcome*treatment / prob)
+    ) %>% 
+    # Calculate ACE
+    mutate(ipw = EY1_ipw - EY0_ipw)
+}
+```
+
+We miss $X_2$ in the model, which makes the model misspecified.
 ```{r}
 prop_score_model_w <- function(data) {
   # OOPS! I forgot var_2
@@ -67,43 +86,40 @@ prop_score_model_w <- function(data) {
 ```
 
 ```{r}
-#IPW correct
-ipw_estimator <- function(data, model) {
-  data %>% 
-    mutate(
-      prob = predict(model, newdata = data, type = 'response'),
-    ) %>% 
-    summarise(
-      EY0_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
-      EY1_ipw = mean(outcome*treatment / prob)
-    ) %>% 
-    mutate(ipw = EY1_ipw - EY0_ipw)
-}
-```
-
-```{r}
-# IPW wrong
+# IPW estimator is wrong
 ipw_estimator_w <- function(data, model) {
   data %>% 
     mutate(
       prob = predict(model, newdata = data, type = 'response'),
     ) %>% 
     summarise(
+      # Calculate expected value for both treatment and non-treatment using IPW equation
       EYB_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
       EYA_ipw = mean(outcome*treatment / prob)
     ) %>% 
+    # Calculate ACE
     mutate(ipw_w = EYA_ipw - EYB_ipw)
 }
 ```
 
 ## REG model
 
+We create the correct model of outcome regression model with both variables, $X_1$ and $X_2$.
 ```{r}
 mean_outcome_model <- function(data) {
   glm(outcome ~ treatment + var_1 + var_2, data = data)
 }
 ```
 
+```{r}
+#REG estimator is correct
+outcome_model_estimator <- function(data) {
+   mean_model <- mean_outcome_model(data) # Compute the model
+   summary(mean_model)$coefficients['treatment', ][1] # Coefficient for treatment
+}
+```
+
+We miss $X_2$ in this model, which makes this REG model misspecified.
 ```{r}
 mean_outcome_model_w <- function(data) {
   # MISSING var_2??!?!
@@ -112,52 +128,38 @@ mean_outcome_model_w <- function(data) {
 ```
 
 ```{r}
-#REG correct
-outcome_model_estimator <- function(data) {
-   mean_model <- mean_outcome_model(data) # Compute the model
-   summary(mean_model)$coefficients['treatment', ][1] # Coefficient for treatment
-}
-```
-
-```{r}
-# REG wrong
+# REG estimator is wrong
 outcome_model_estimator_w <- function(data) {
-   mean_model <- mean_outcome_model_w(data)
-   summary(mean_model)$coefficients['treatment', ][1]
+   mean_model <- mean_outcome_model_w(data) # Compute the model
+   summary(mean_model)$coefficients['treatment', ][1] # Coefficient for treatment
 }
 ```
 
 ## DRE estimator
 
+Building DRE estimator using the combination of IPW model and REG model.
 ```{r}
 dr_estimator <- function(data, prop_model, mean_model) {
   data %>% 
     mutate(
-      prob = predict(prop_model, newdata = data, type = 'response'),
+      # IPW model
+      prob = predict(prop_model, newdata = data, type = 'response'), 
+      # REG model 
       pred = predict(mean_model, newdata = data, type = 'response'),
+      # Combination of IPW and REG model
       augm = (treatment - prob)*pred
     ) %>% 
     summarise(
+      # Calculate expected value for both treatment and non-treatment using IPW + REG.
       EY0_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
       EY1_dr = mean((outcome*treatment - augm) / prob)
     ) %>% 
+    # Compute ACE for DRE
     mutate(dre = EY1_dr - EY0_dr)
 }
 ```
 
-```{r, include=FALSE}
-
-# dont run
-# naive_estimator <- function(data) {
-#   data %>% 
-#     summarise(
-#       EY0_naive = mean(outcome*(1 - treatment)),
-#       EY1_naive = mean(outcome*treatment)
-#     ) %>% 
-#     mutate(naive_estimator = EY1_naive- EY0_naive)
-# }
-```
-
+Then, we create the simulated dataset for all estimators and expected value from IPW, REG, and DRE models. 
 ```{r, include=FALSE}
 n_simu <- 150
 n_obs <- 200
@@ -167,14 +169,23 @@ nested_df <-
   group_by(simu_id) %>% 
   nest() %>% 
   mutate(
+    # correct ipw model
     prop_model     = map(data, prop_score_model),
+    # incorrect ipw model
     prop_model_w   = map(data, prop_score_model_w),
+    # correct reg model
     mean_model     = map(data, mean_outcome_model),
+    # incorrect reg model
     mean_model_w   = map(data, mean_outcome_model_w),
+    # correct reg estimation
     model_estimate = map(data, outcome_model_estimator),
+    # incorrect reg estimation
     model_estimate_w = map(data, outcome_model_estimator_w),
+    # correct ipw estimation
     ipw_estimate   = map2(data, prop_model, ipw_estimator),
+    # incorrect ipw estimation
     ipw_estimate_w = map2(data, prop_model_w, ipw_estimator_w),
+    # generate dre estimation
     dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
   ) %>% 
   ungroup() %>% 
@@ -198,7 +209,7 @@ Now, we have five models: IPW (both correct and incorrect), REG (both correct an
 
 - Reminder: propensity score is just a logistic regression of the probability of receiving the treatment
 
-In our example, we proposed the
+In our example, we proposed the correct IPW model:
 
 ```{r, eval = FALSE}
 prop_score_model <- function(data) {
@@ -208,12 +219,11 @@ prop_score_model <- function(data) {
 
 ## Introducing IPW estimator
 
-- Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment
+- Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment (propensity score $\widehat {PS_i}$)
 
-$$\widehat {PS}_i=\pi(X_{i})$$
+$$\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{E[Y_{i}|{A=1}]}{\color{red}{\widehat {PS_i}}} - \frac{E[Y_{i}|{A=0}]}{\color{red}{1-\widehat {PS_i}}}\bigg]$$
 
-$$\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i}}{\color{red}{\pi(X_{i})}} - \frac{Y_{i}(1-A_{i})}{\color{red}{1-\pi(X_{i})}}\bigg]$$
-
+Generating IPW estimator and calculate ACE by IPW equation
 ```{r, eval = FALSE}
 ipw_estimator <- function(data, model) {
   data %>% 
@@ -231,6 +241,7 @@ ipw_estimator <- function(data, model) {
 
 ## IPW Performance 
 
+Plot for correct IPW
 ```{r, echo = FALSE}
 mean_ipw_estimator <- 
   mean(nested_df$ipw)
@@ -243,11 +254,11 @@ nested_df %>%
   theme_bw()
 ```
 
+The plot shows the data points are evenly spread around 10, and the mean of correct IPW estimate is 10.07, which is close to the true ACE we set. 
 
 ## IPW could fail
 
-- If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail.
-
+- If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail. We used the biased ipw results from the 'nested_df' dataset.
 
 ```{r, echo = FALSE}
 mean_ipw_estimator_w <- 
@@ -261,6 +272,8 @@ nested_df %>%
   theme_bw()
 
 ```
+
+The plot shows a obvious trend that all data points from biased IPW model shift upward, which the ACE for incorrect IPW model is higher than the ACE=10 we set in the beginning.  
 
 ```{r, echo=F}
 a <- ggplot(nested_df, aes(x=simu_id, y=ipw, group=1)) +
@@ -276,18 +289,12 @@ b <- ggplot(nested_df, aes(x=simu_id, y=ipw_w, group=1))+
 plot_grid(a, b, labels=c("Correct IPW", "Incorrect IPW"), ncol = 2, nrow = 1)
 ```
 
-
 We overestimated the true ACE (which is 10) if we wrongly specified the model form in IPW setting.
 
 ---
 
 # Strategy 2: REG estimator (model the outcome)
 
-- Default strategy of data scientist would be to create a linear model
-
- $$Y =\alpha_0 + \alpha_1 X_1 + \alpha_2 X_2 +\delta A+ \varepsilon$$ 
-
-- Use $\hat{\delta}$ as the estimator of the causal effect
 
 ```{r, eval = FALSE}
 mean_outcome_model <- function(data) {
@@ -369,14 +376,9 @@ We also overestimated the true ACE (10) if our REG model is mis-specified.
 
 ## Doubly Robust Estimator
 
-$$\hat{\delta}_{DR} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{\pi(X_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{1-\pi(X_{i})}\bigg]$$
+$$\hat{\delta}_{DRE} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(Z_{i}))\mu(Z_i, A_i)}}{\pi(Z_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(Z_{i}))\mu(Z_i, A_i)}}{1-\pi(Z_{i})}\bigg]$$
 
-where $$\mu(X, A) = \hat{\alpha}_0 + \hat{\alpha}_1 X_1 + \hat{\alpha}_2 X_2 +\hat{\delta} A$$
-
-- The term in red is said to *augment* the IPW estimator
-
-- It can be shown that this estimator will consistently estimate $\delta = E[Y(A)]-E[Y(B)]$ as long as either $\pi(X_{i})$ or $\mu(X, A)$ are correct 
-
+where $\pi(Z_i)=\widehat {PS_i}$ (propensity score from IPW), and $\mu(Z_i, A_i)=E[Y|A=1,Z]$ (this is the part of outcome regression model in DRE model). The term in red is said to *augment* the IPW estimator.
 
 ```{r, eval = FALSE}
 dr_estimator <- function(data, prop_model, mean_model) {
