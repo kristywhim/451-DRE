@@ -146,14 +146,16 @@ dr_estimator <- function(data, prop_model, mean_model) {
 ```
 
 ```{r, include=FALSE}
-naive_estimator <- function(data) {
-  data %>% 
-    summarise(
-      EY0_naive = mean(outcome*(1 - treatment)),
-      EY1_naive = mean(outcome*treatment)
-    ) %>% 
-    mutate(naive_estimator = EY1_naive- EY0_naive)
-}
+
+# dont run
+# naive_estimator <- function(data) {
+#   data %>% 
+#     summarise(
+#       EY0_naive = mean(outcome*(1 - treatment)),
+#       EY1_naive = mean(outcome*treatment)
+#     ) %>% 
+#     mutate(naive_estimator = EY1_naive- EY0_naive)
+# }
 ```
 
 ```{r, include=FALSE}
@@ -169,7 +171,6 @@ nested_df <-
     prop_model_w   = map(data, prop_score_model_w),
     mean_model     = map(data, mean_outcome_model),
     mean_model_w   = map(data, mean_outcome_model_w),
-    naive_estimate = map(data, naive_estimator),
     model_estimate = map(data, outcome_model_estimator),
     model_estimate_w = map(data, outcome_model_estimator_w),
     ipw_estimate   = map2(data, prop_model, ipw_estimator),
@@ -177,7 +178,7 @@ nested_df <-
     dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
   ) %>% 
   ungroup() %>% 
-  unnest(c(naive_estimate, model_estimate, model_estimate_w, ipw_estimate, ipw_estimate_w, dr_estimate))
+  unnest(c(model_estimate, model_estimate_w, ipw_estimate, ipw_estimate_w, dr_estimate))
 ```
 
 Now, we have five models: IPW (both correct and incorrect), REG (both correct and incorrect), and DRE.
@@ -185,10 +186,8 @@ Now, we have five models: IPW (both correct and incorrect), REG (both correct an
 ---
 
 # Strategy 1: Inverse Probability Weighting (IPW)
+
 ## Intuition Behind it
-
----
-
 - In an experiment the probability of receiving a treatment are always equal across all units (i.e., 50%)
 
 - In the current case, the probability of receiving the treatment depends on variables that affect the outcome
@@ -207,9 +206,7 @@ prop_score_model <- function(data) {
 }
 ```
 
----
-
-# Strategy 1: IPW estimator
+## Introducing IPW estimator
 
 - Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment
 
@@ -231,10 +228,8 @@ ipw_estimator <- function(data, model) {
 }
 ```
 
----
 
-class: center
-# IPW Performance 
+## IPW Performance 
 
 ```{r, echo = FALSE}
 mean_ipw_estimator <- 
@@ -244,13 +239,12 @@ nested_df %>%
   ggplot(aes(x = simu_id, y = ipw)) +
   ggtitle(paste('The mean of the ipw estimate (correctly specified) is ', round(mean_ipw_estimator, 2))) + 
   geom_point(color = 'blue') +
-  geom_hline(yintercept = 10) +
+  geom_hline(yintercept = 10) + ylab("ACE estimate")+
   theme_bw()
 ```
 
----
 
-# IPW could fail
+## IPW could fail
 
 - If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail.
 
@@ -263,18 +257,22 @@ nested_df %>%
   ggplot(aes(x = simu_id, y = ipw_w)) +
   ggtitle(paste('The mean of the ipw estimate (incorrectly specified) is ', round(mean_ipw_estimator_w, 2))) + 
   geom_point(color = 'blue') +
-  geom_hline(yintercept = 10) +
+  geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 
 ```
 
-```{r}
+```{r, echo=F}
 a <- ggplot(nested_df, aes(x=simu_id, y=ipw, group=1)) +
   geom_boxplot()+
+  geom_hline(yintercept=10, color='red')+ylab("ACE estimate")+
   ylim(7, 13.5)
+
 b <- ggplot(nested_df, aes(x=simu_id, y=ipw_w, group=1))+
   geom_boxplot()+
+  geom_hline(yintercept=10, color='red')+ylab("ACE estimate")+
   ylim(7, 13.5)
+
 plot_grid(a, b, labels=c("Correct IPW", "Incorrect IPW"), ncol = 2, nrow = 1)
 ```
 
@@ -304,10 +302,7 @@ outcome_model_estimator <- function(data) {
 }
 ```
 
----
-
-class: center
-# Strategy 2: Performance - Simulation
+## REG Performance
 
 ```{r, echo = FALSE}
 mean_model_estimator <- 
@@ -317,19 +312,16 @@ nested_df %>%
   ggplot(aes(x = simu_id, y = model_estimate)) +
   ggtitle(paste('The mean of the REG estimate (correctly specified) is ', round(mean_model_estimator, 2))) + 
   geom_point(color = 'blue') +
-  geom_hline(yintercept = 10) +
+  geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
 
 
-
----
-
-# REG model could also fail
+## REG could also fail
 
 - If the model for Y is incorrect (as we recalled we left *var_2* out), it would cause bias in the REG outcome model, which cause the model to fail.
 
-```{r}
+```{r, echo=F}
 mean_model_estimator_w <- 
   mean(nested_df$model_estimate_w)
 
@@ -337,17 +329,18 @@ nested_df %>%
   ggplot(aes(x = simu_id, y = model_estimate_w)) +
   ggtitle(paste('The mean of the REG estimate (incorrectly specified) is ', round(mean_model_estimator_w, 2))) + 
   geom_point(color = 'blue') +
-  geom_hline(yintercept = 10) +
+  geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
 
-```{r}
+```{r, echo=F}
 c <- ggplot(nested_df, aes(x=simu_id, y=model_estimate, group=1)) +
-  geom_boxplot()+
+  geom_boxplot()+geom_hline(yintercept=10, color='red')+ylab("ACE estimate")+
   ylim(9, 11)
 d <- ggplot(nested_df, aes(x=simu_id, y=model_estimate_w, group=1))+
-  geom_boxplot()+
+  geom_boxplot()+geom_hline(yintercept=10, color='red')+ylab("ACE estimate")+
   ylim(9, 11)
+
 plot_grid(c, d, labels=c("Correct REG", "Incorrect REG"), ncol = 2, nrow = 1)
 ```
 
@@ -368,14 +361,13 @@ We also overestimated the true ACE (10) if our REG model is mis-specified.
 
 - This is called the doubly robustness property
 
----
 
-# This could also fail but is less likely to do so
+## Robustness in DRE
 
 
----
 
-# Combining Strategy 1 and 2 - Doubly Robust Estimator
+
+## Doubly Robust Estimator
 
 $$\hat{\delta}_{DR} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{\pi(X_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{1-\pi(X_{i})}\bigg]$$
 
@@ -385,9 +377,6 @@ where $$\mu(X, A) = \hat{\alpha}_0 + \hat{\alpha}_1 X_1 + \hat{\alpha}_2 X_2 +\h
 
 - It can be shown that this estimator will consistently estimate $\delta = E[Y(A)]-E[Y(B)]$ as long as either $\pi(X_{i})$ or $\mu(X, A)$ are correct 
 
----
-
-# Combining Strategy 1 and 2 - Doubly Robust Estimator
 
 ```{r, eval = FALSE}
 dr_estimator <- function(data, prop_model, mean_model) {
@@ -405,10 +394,11 @@ dr_estimator <- function(data, prop_model, mean_model) {
 }
 ```
 
----
 
-class: center
-# DRE Performance
+## DRE Performance:
+
+---
+### When IPW and REG both correct
 
 ```{r, echo = FALSE}
 mean_dre_estimator <- 
@@ -416,16 +406,16 @@ mean_dre_estimator <-
 
 nested_df %>% 
   ggplot(aes(x = simu_id, y = dre)) +
-  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
+  ggtitle(paste('The mean of the DRE estimate (both correct) is ', round(mean_dre_estimator, 2))) + 
   geom_point(color = 'red') +
-  geom_hline(yintercept = 10) +
+  geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
 
 
 ---
 
-# Doubly Robust Estimator - Propensity Score is Incorrect
+### When IPW is Incorrect, REG is correct
 
 ```{r}
 prop_score_model <- function(data) {
@@ -434,126 +424,132 @@ prop_score_model <- function(data) {
 }
 ```
 
----
-
-class: center
-# Doubly Robust Estimator - Propensity Score is Incorrect
-
 ```{r, echo = FALSE}
+# DRE: IPW incorrect
 nested_pe_df <- 
   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
   group_by(simu_id) %>% 
   nest() %>% 
   mutate(
-    prop_model     = map(data, prop_score_model),
+    prop_model_w     = map(data, prop_score_model_w),
     mean_model     = map(data, mean_outcome_model),
-    naive_estimate = map(data, naive_estimator),
     model_estimate = map(data, outcome_model_estimator),
-    ipw_estimate   = map2(data, prop_model, ipw_estimator),
-    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
+    ipw_estimate_w   = map2(data, prop_model_w, ipw_estimator_w),
+    dr_estimate    = pmap(list(data, prop_model_w, mean_model), dr_estimator)
   ) %>% 
   ungroup() %>% 
-  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+  unnest(c(model_estimate, ipw_estimate_w, dr_estimate))
 ```
 
 
-```{r, echo = FALSE, out.width="60%"}
+```{r, echo = FALSE}
 mean_dre_estimator <- 
   mean(nested_pe_df$dre)
 
 nested_pe_df %>% 
   ggplot(aes(x = simu_id, y = dre)) +
   geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
-  geom_hline(yintercept = 10) +
+  ggtitle(paste('The mean of the DRE estimate (IPW misspecified) is ', round(mean_dre_estimator, 2))) + 
+  geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
 
 ---
-# Doubly Robust Estimator - Mean Model is Incorrect
+### When REG is incorrect, IPW is correct
 
-```{r}
-mean_outcome_model <- function(data) {
+```{r,eval=F}
+mean_outcome_model_w <- function(data) {
   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
   glm(outcome ~ var_1 + treatment, data = data)
 }
 ```
 
----
-<!-- class: center -->
-# Doubly Robust Estimator - Mean Model is Incorrect
 
 ```{r, echo = FALSE}
+# REG incorrect, IPW correct
 nested_om_df <- 
   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
   group_by(simu_id) %>% 
   nest() %>% 
   mutate(
     prop_model     = map(data, prop_score_model),
-    mean_model     = map(data, mean_outcome_model),
-    naive_estimate = map(data, naive_estimator),
-    model_estimate = map(data, outcome_model_estimator),
+    mean_model_w     = map(data, mean_outcome_model_w),
+    model_estimate_w = map(data, outcome_model_estimator_w),
     ipw_estimate   = map2(data, prop_model, ipw_estimator),
-    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
+    dr_estimate    = pmap(list(data, prop_model, mean_model_w), dr_estimator)
   ) %>% 
   ungroup() %>% 
-  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+  unnest(c(model_estimate_w, ipw_estimate,dr_estimate))
 ```
 
-```{r, echo = FALSE, out.width="60%"}
+```{r, echo = FALSE}
 mean_dre_estimator <- 
   mean(nested_om_df$dre)
 
 nested_om_df %>% 
   ggplot(aes(x = simu_id, y = dre)) +
   geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
-  geom_hline(yintercept = 10) +
+  ggtitle(paste('The mean of the DRE estimate (REG misspecified) is ', round(mean_dre_estimator, 2))) + 
+  geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
 
+### When both REG and IPW are incorrect - DRE fails!!
+
 ```{r}
-prop_score_model <- function(data) {
+prop_score_model_w<- function(data) {
   # OOPS! I forgot var_2
   glm(treatment ~ var_1, data = data, family = 'binomial')
 }
-mean_outcome_model <- function(data) {
+mean_outcome_model_w <- function(data) {
   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
   glm(outcome ~ var_1 + treatment, data = data)
 }
 ```
 
----
 
-class: center
-# Doubly Robust Estimator - Propensity Score is Incorrect
+```{r}
+dr_estimator_w <- function(data, prop_model_w, mean_model_w) {
+  data %>% 
+    mutate(
+      prob = predict(prop_model_w, newdata = data, type = 'response'),
+      pred = predict(mean_model_w, newdata = data, type = 'response'),
+      augm = (treatment - prob)*pred
+    ) %>% 
+    summarise(
+      EY0_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
+      EY1_dr = mean((outcome*treatment - augm) / prob)
+    ) %>% 
+    mutate(dre_w = EY1_dr - EY0_dr)
+}
+```
 
 ```{r, echo = FALSE}
+# Both wrong
 nested_bw_df <- 
   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
   group_by(simu_id) %>% 
   nest() %>% 
   mutate(
-    prop_model     = map(data, prop_score_model),
-    mean_model     = map(data, mean_outcome_model),
-    naive_estimate = map(data, naive_estimator),
-    model_estimate = map(data, outcome_model_estimator),
-    ipw_estimate   = map2(data, prop_model, ipw_estimator),
-    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
+    prop_model_w     = map(data, prop_score_model_w),
+    mean_model_w   = map(data, mean_outcome_model_w),
+    model_estimate_w = map(data, outcome_model_estimator_w),
+    ipw_estimate_w   = map2(data, prop_model_w, ipw_estimator_w),
+    dr_estimate_w    = pmap(list(data, prop_model_w, mean_model_w), dr_estimator_w)
   ) %>% 
   ungroup() %>% 
-  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+  unnest(c(model_estimate_w, ipw_estimate_w, dr_estimate_w))
 ```
 
-```{r, echo = FALSE, out.width="60%"}
+```{r, echo = FALSE}
 mean_dre_estimator <- 
-  mean(nested_bw_df$dre)
+  mean(nested_bw_df$dre_w)
 
 nested_bw_df %>% 
-  ggplot(aes(x = simu_id, y = dre)) +
+  ggplot(aes(x = simu_id, y = dre_w)) +
   geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate is ', round(mean_dre_estimator, 2))) + 
-  geom_hline(yintercept = 10) +
+  ggtitle(paste('The mean of the DRE estimate (both incorrect) is ', round(mean_dre_estimator, 2))) + 
+  geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
 
