@@ -455,8 +455,8 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
 
   <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
-  <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
-  <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
+  <link href="site_libs/font-awesome-6.2.1/css/all.min.css" rel="stylesheet"/>
+  <link href="site_libs/font-awesome-6.2.1/css/v4-shims.min.css" rel="stylesheet"/>
   <script src="site_libs/headroom-0.9.4/headroom.min.js"></script>
   <script src="site_libs/autocomplete-0.37.1/autocomplete.min.js"></script>
   <script src="site_libs/fuse-6.4.1/fuse.min.js"></script>
@@ -2071,7 +2071,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </script>
 
   <!--/radix_placeholder_distill-->
-  <script src="site_libs/header-attrs-2.17/header-attrs.js"></script>
+  <script src="site_libs/header-attrs-2.21/header-attrs.js"></script>
   <script src="site_libs/popper-2.6.0/popper.min.js"></script>
   <link href="site_libs/tippy-6.2.7/tippy.css" rel="stylesheet" />
   <link href="site_libs/tippy-6.2.7/tippy-light-border.css" rel="stylesheet" />
@@ -2126,6 +2126,31 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
 <div class="d-article">
 <h1 id="dre">DRE is a combined method from REG and IPW</h1>
+<p><span class="math display">\[
+\begin{gathered}
+\widehat{D R E}_{a=1}=\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i}\left(Y_{i}-\widehat{Y}_{i}^{a=1}\right)}{\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=1}\right) \\
+\widehat{D R E}_{a=0}=\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right)\left(Y_{i}-\widehat{Y}_{i}^{a=0}\right)}{1-\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=0}\right) \\
+\widehat{D R E}_{a=1}-\widehat{D R E}_{a=0}=\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i}\left(Y_{i}-\widehat{Y}_{i}^{a=1}\right)}{\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=1}\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right)\left(Y_{i}-\widehat{Y}_{i}^{a=0}\right)}{1-\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=0}\right)
+\end{gathered}
+\]</span></p>
+<p>The variables in the DRE above are as follows:</p>
+<ul>
+<li><p><span class="math inline">\(\boldsymbol{A_{i}}\)</span> : observed Intervention in the data for observation “<span class="math inline">\(i\)</span>”</p></li>
+<li><p><span class="math inline">\(\boldsymbol{Y_{i}}\)</span> : observed Outcome in the data for observation ” <span class="math inline">\(i\)</span> ”</p></li>
+<li><p><span class="math inline">\(\boldsymbol{\widehat{Y}_{i}^{a=1}}\)</span> : predicted Outcome for observation ” <span class="math inline">\(i\)</span> ” from Standardization via the parametric <span class="math inline">\(g\)</span> formula under Intervention <span class="math inline">\(a=1\)</span></p></li>
+<li><p><span class="math inline">\(\boldsymbol {\widehat{Y}_{i}^{a=0}}\)</span> : predicted Outcome for observation “<span class="math inline">\(i\)</span>” from Standardization via the parametric <span class="math inline">\(g\)</span> formula under Intervention <span class="math inline">\(a=0\)</span></p></li>
+<li><p><span class="math inline">\(\widehat{\boldsymbol{PS}}_{\mathrm{i}}\)</span> : predicted Propensity Score (i.e. <span class="math inline">\(\operatorname{Pr}\left[A=1 \mid C_{1}, C_{2}\right]\)</span> ) for observation “<span class="math inline">\(i\)</span>”.</p></li>
+<li><p><span class="math inline">\(\widehat{\boldsymbol{D R E}}_{a}\)</span> : Doubly Robust Estimator (DRE) under Intervention <span class="math inline">\(a\)</span></p></li>
+<li><p><span class="math inline">\(\boldsymbol{n}\)</span> : total number of observations in the observed dataset</p></li>
+</ul>
+<p>Under correct specification of the Outcome or Intervention Model, the following equalities hold:</p>
+<p><span class="math display">\[
+\begin{aligned}
+E\left[\widehat{D R E}_{a=1}\right] &amp; =E\left[Y^{a=1}\right] \\
+E\left[\widehat{D R E}_{a=0}\right] &amp; =E\left[Y^{a=0}\right] \\
+E\left[\widehat{D R E}_{a=1}-\widehat{D R E}_{a=0}\right] &amp; =E\left[Y^{a=1}\right]-E\left[Y^{a=0}\right]
+\end{aligned}
+\]</span></p>
 <h2 id="properties-of-dre">Properties of DRE</h2>
 <h1 id="proof-of-dres-unbiasedness">Proof of DRE’s unbiasedness</h1>
 <h2 id="when-ipw-is-misspecified-but-reg-is-correct">When IPW is misspecified, but REG is correct</h2>

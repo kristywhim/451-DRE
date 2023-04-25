@@ -6,6 +6,41 @@ description: |
 
 # DRE is a combined method from REG and IPW {#dre}
 
+$$
+\begin{gathered}
+\widehat{D R E}_{a=1}=\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i}\left(Y_{i}-\widehat{Y}_{i}^{a=1}\right)}{\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=1}\right) \\
+\widehat{D R E}_{a=0}=\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right)\left(Y_{i}-\widehat{Y}_{i}^{a=0}\right)}{1-\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=0}\right) \\
+\widehat{D R E}_{a=1}-\widehat{D R E}_{a=0}=\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i}\left(Y_{i}-\widehat{Y}_{i}^{a=1}\right)}{\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=1}\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right)\left(Y_{i}-\widehat{Y}_{i}^{a=0}\right)}{1-\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=0}\right)
+\end{gathered}
+$$
+
+The variables in the DRE above are as follows:
+  
+  - $\boldsymbol{A_{i}}$ : observed Intervention in the data for observation "$i$"
+  
+  - $\boldsymbol{Y_{i}}$ : observed Outcome in the data for observation " $i$ "
+  
+  - $\boldsymbol{\widehat{Y}_{i}^{a=1}}$ : predicted Outcome for observation " $i$ " from Standardization via the parametric $g$ formula under Intervention $a=1$
+  
+  - $\boldsymbol {\widehat{Y}_{i}^{a=0}}$ : predicted Outcome for observation "$i$" from Standardization via the parametric $g$ formula under Intervention $a=0$
+  
+  - $\widehat{\boldsymbol{PS}}_{\mathrm{i}}$ : predicted Propensity Score (i.e. $\operatorname{Pr}\left[A=1 \mid C_{1}, C_{2}\right]$ ) for observation "$i$".
+  
+  - $\widehat{\boldsymbol{D R E}}_{a}$ : Doubly Robust Estimator (DRE) under Intervention $a$
+  
+  - $\boldsymbol{n}$ : total number of observations in the observed dataset
+
+Under correct specification of the Outcome or Intervention Model, the following equalities hold:
+
+$$
+\begin{aligned}
+E\left[\widehat{D R E}_{a=1}\right] & =E\left[Y^{a=1}\right] \\
+E\left[\widehat{D R E}_{a=0}\right] & =E\left[Y^{a=0}\right] \\
+E\left[\widehat{D R E}_{a=1}-\widehat{D R E}_{a=0}\right] & =E\left[Y^{a=1}\right]-E\left[Y^{a=0}\right]
+\end{aligned}
+$$
+
+
 ## Properties of DRE
 
 # Proof of DRE's unbiasedness
