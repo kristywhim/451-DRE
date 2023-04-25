@@ -1,7 +1,6 @@
 ---
-title: "Doubly Robust Estimation of Causal Effects in R"
+title: "Doubly Robust Estimator: simulation activity in R"
 description: |
-  Some additional details about the website
 ---
 
 # Computational Simulation {#sim}
@@ -16,6 +15,11 @@ description: |
 
 ---
 
+```{r}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE, cache= T)
+```
+
+
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE, 
         fig.align = "center")
@@ -28,6 +32,8 @@ library(knitr)
 library(gridExtra)
 library(cowplot)
 ```
+
+---
 
 # Setting up data
 
@@ -199,15 +205,14 @@ Now, we have five models: IPW (both correct and incorrect), REG (both correct an
 # Strategy 1: Inverse Probability Weighting (IPW)
 
 ## Intuition Behind it
-- In an experiment the probability of receiving a treatment are always equal across all units (i.e., 50%)
+
+- In an experiment the probability of receiving a treatment are always equal across all units (50%)
 
 - In the current case, the probability of receiving the treatment depends on variables that affect the outcome
 
-- If we knew what this probabilities are we could re-weight our sample such that the data would better match a randomized experiment
+- If we knew what this probabilities are we could re-weight our sample such that the data would better match a randomized experiment - by creating the "pesudopopulation" (mentioned earlier)
 
-- In the re-weighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up
-
-- Reminder: propensity score is just a logistic regression of the probability of receiving the treatment
+- Reminder: propensity score is just a logistic regression of the probability of receiving the treatment, giving their $Z$ values (confounders)
 
 In our example, we proposed the correct IPW model:
 
@@ -223,7 +228,8 @@ prop_score_model <- function(data) {
 
 $$\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{E[Y_{i}|{A=1}]}{\color{red}{\widehat {PS_i}}} - \frac{E[Y_{i}|{A=0}]}{\color{red}{1-\widehat {PS_i}}}\bigg]$$
 
-Generating IPW estimator and calculate ACE by IPW equation
+Generating IPW estimator and calculate ACE by IPW equation:
+
 ```{r, eval = FALSE}
 ipw_estimator <- function(data, model) {
   data %>% 
@@ -295,6 +301,7 @@ We overestimated the true ACE (which is 10) if we wrongly specified the model fo
 
 # Strategy 2: REG estimator (model the outcome)
 
+The same (correct) REG model as we've seen before:
 
 ```{r, eval = FALSE}
 mean_outcome_model <- function(data) {
@@ -323,10 +330,11 @@ nested_df %>%
   theme_bw()
 ```
 
+When outcome model is correctly modelled, this shows unbiased estimation of ACE.
 
 ## REG could also fail
 
-- If the model for Y is incorrect (as we recalled we left *var_2* out), it would cause bias in the REG outcome model, which cause the model to fail.
+- If the model for Y is incorrect (as we recalled we left *var_2* out), it will cause bias in the REG outcome model, which cause the model to fail.
 
 ```{r, echo=F}
 mean_model_estimator_w <- 
@@ -364,42 +372,20 @@ We also overestimated the true ACE (10) if our REG model is mis-specified.
 
 - If you combine both approaches, you just need either one to work but not both
 
-- As a data scientist you have 1 out of 2 chances to get the correct answer
-
-- This is called the doubly robustness property
-
-
-## Robustness in DRE
-
-
-
+- This is "doubly robust" property!
 
 ## Doubly Robust Estimator
+
+DRE's estimation of average causal effect can be summarized into this equation (it is the same thing as the one in the previous section but we changed some notations):
 
 $$\hat{\delta}_{DRE} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(Z_{i}))\mu(Z_i, A_i)}}{\pi(Z_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(Z_{i}))\mu(Z_i, A_i)}}{1-\pi(Z_{i})}\bigg]$$
 
 where $\pi(Z_i)=\widehat {PS_i}$ (propensity score from IPW), and $\mu(Z_i, A_i)=E[Y|A=1,Z]$ (this is the part of outcome regression model in DRE model). The term in red is said to *augment* the IPW estimator.
 
-```{r, eval = FALSE}
-dr_estimator <- function(data, prop_model, mean_model) {
-  data %>% 
-    mutate(
-      prob = predict(prop_model, newdata = data, type = 'response'),
-      pred = predict(mean_model, newdata = data, type = 'response'),
-      augm = (treatment - prob)*pred
-    ) %>% 
-    summarise(
-      EYB_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
-      EYA_dr = mean((outcome*treatment - augm) / prob)
-    ) %>% 
-    mutate(dre = EYA_dr - EYB_dr)
-}
-```
-
-
 ## DRE Performance:
 
 ---
+
 ### When IPW and REG both correct
 
 ```{r, echo = FALSE}
@@ -414,10 +400,13 @@ nested_df %>%
   theme_bw()
 ```
 
+This is fine - we have a very unbiased estimation.
 
 ---
 
 ### When IPW is Incorrect, REG is correct
+
+Let's explore what happens to DRE when something goes wrong!
 
 ```{r}
 prop_score_model <- function(data) {
@@ -456,8 +445,12 @@ nested_pe_df %>%
   theme_bw()
 ```
 
+The mean of estimates are above 10, indicating an overestimate of ACE. But this is still acceptable considering IPW is wrongly assigned - this is not too bad.
+
 ---
+
 ### When REG is incorrect, IPW is correct
+
 
 ```{r,eval=F}
 mean_outcome_model_w <- function(data) {
@@ -496,7 +489,12 @@ nested_om_df %>%
   theme_bw()
 ```
 
+
+Although it performed worse than the first scenario in DRE (when both REG and IPW are correctly specified), the mean of this estimation is still fair and we can say it maintains robustness.
+
 ### When both REG and IPW are incorrect - DRE fails!!
+
+Let’s look at what happens to DRE estimation when both models are incorrectly identified. From previous slides, we learned how robust DRE is - its unbiasedness holds even if one of the models is incorrect, but this is not the case here!
 
 ```{r}
 prop_score_model_w<- function(data) {
@@ -567,7 +565,7 @@ f <- ggplot(nested_om_df, aes(x=simu_id, y=dre, group=1))+
   geom_hline(yintercept = 10, color='red')+
   ylim(7,14)+
   theme_bw()
-g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre, group=1))+
+g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre_w, group=1))+
   geom_boxplot()+
   geom_hline(yintercept = 10, color='red')+
   ylim(7,14)+
@@ -576,20 +574,19 @@ plot_grid(e, f, g, labels=c("Incorrect IPW", "Incorrect REG", "Both Incorrect"),
 ```
 
 
+This boxplot shows the summary of three DRE estimation in the three scenario we simulated. When both are incorrect, the mean of this estimation is far away from 10 (the true ACE, indicated by the red line).
+
 ---
+
 # Conclusion
 
-- If you have non randomized data you cannot simply calculate the difference in means between $A$
- and $B$ to estimate the causal effect
- 
-- You can use the IPW estimator based on a logistic regression of the probability of receiving the treatment
-
-- You can model the outcome based on a linear regression with the confounding variables as well as $A$
-
-- Or you can use the doubly robust estimator which will work as long as either the logistic or the linear regression are correct, but not both
+This simulation activity shows how effective DRE is - that its effectiveness depends on correct model specification or outcome regression model (REG), or inverse Probability weighting by propensity score (IPW). Its robustness is maintained when one of the models is incorrect.
+	
+From previous work, we have also identified and learned why DRE is unbiased when either of them is incorrect. If we have non-randomized trial experiments, we can surely apply methods introduced here today!
 
 ---
+
 # References
 
 - Lunceford, Jared K., and Marie Davidian. "Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study." Statistics in medicine 23.19 (2004): 2937-2960.
-
+- YouTube. (2020). Dr. Sebastian Teran Hidalgo - Doubly Robust Estimation of Causal Effects in R. YouTube. Retrieved April 24, 2023, from https://www.youtube.com/watch?v=5rSTEzp_n48.
