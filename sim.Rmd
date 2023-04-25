@@ -15,7 +15,7 @@ description: |
 
 ---
 
-```{r}
+```{r, echo=F}
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE, cache= T)
 ```
 
@@ -33,7 +33,6 @@ library(gridExtra)
 library(cowplot)
 ```
 
----
 
 # Setting up data
 
@@ -60,6 +59,7 @@ simu_observational_data <- function(simu_id = 1, n_obs) {
 ## IPW model
 
 We create the correct model of IPW with both variables, $X_1$ and $X_2$.
+
 ```{r}
 prop_score_model <- function(data) {
   glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
@@ -84,6 +84,7 @@ ipw_estimator <- function(data, model) {
 ```
 
 We miss $X_2$ in the model, which makes the model misspecified.
+
 ```{r}
 prop_score_model_w <- function(data) {
   # OOPS! I forgot var_2
@@ -111,6 +112,7 @@ ipw_estimator_w <- function(data, model) {
 ## REG model
 
 We create the correct model of outcome regression model with both variables, $X_1$ and $X_2$.
+
 ```{r}
 mean_outcome_model <- function(data) {
   glm(outcome ~ treatment + var_1 + var_2, data = data)
@@ -126,6 +128,7 @@ outcome_model_estimator <- function(data) {
 ```
 
 We miss $X_2$ in this model, which makes this REG model misspecified.
+
 ```{r}
 mean_outcome_model_w <- function(data) {
   # MISSING var_2??!?!
@@ -144,6 +147,7 @@ outcome_model_estimator_w <- function(data) {
 ## DRE estimator
 
 Building DRE estimator using the combination of IPW model and REG model.
+
 ```{r}
 dr_estimator <- function(data, prop_model, mean_model) {
   data %>% 
@@ -166,6 +170,7 @@ dr_estimator <- function(data, prop_model, mean_model) {
 ```
 
 Then, we create the simulated dataset for all estimators and expected value from IPW, REG, and DRE models. 
+
 ```{r, include=FALSE}
 n_simu <- 150
 n_obs <- 200
@@ -248,6 +253,7 @@ ipw_estimator <- function(data, model) {
 ## IPW Performance 
 
 Plot for correct IPW
+
 ```{r, echo = FALSE}
 mean_ipw_estimator <- 
   mean(nested_df$ipw)
@@ -382,9 +388,6 @@ $$\hat{\delta}_{DRE} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{r
 
 where $\pi(Z_i)=\widehat {PS_i}$ (propensity score from IPW), and $\mu(Z_i, A_i)=E[Y|A=1,Z]$ (this is the part of outcome regression model in DRE model). The term in red is said to *augment* the IPW estimator.
 
-## DRE Performance:
-
----
 
 ### When IPW and REG both correct
 
@@ -403,6 +406,8 @@ nested_df %>%
 This is fine - we have a very unbiased estimation.
 
 ---
+
+Let's analyze DRE's performance under following settings:
 
 ### When IPW is Incorrect, REG is correct
 
@@ -554,7 +559,7 @@ nested_bw_df %>%
 ```
 
 
-```{r}
+```{r, echo=F}
 e <- ggplot(nested_pe_df, aes(x=simu_id, y=dre, group=1)) +
   geom_boxplot()+
   geom_hline(yintercept = 10, color='red')+
