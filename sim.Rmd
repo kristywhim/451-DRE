@@ -31,6 +31,7 @@ library(ggplot2)
 library(knitr)
 library(gridExtra)
 library(cowplot)
+set.seed(451)
 ```
 
 
@@ -221,11 +222,11 @@ Now, we have five models: IPW (both correct and incorrect), REG (both correct an
 
 In our example, we proposed the correct IPW model:
 
-```{r, eval = FALSE}
-prop_score_model <- function(data) {
-  glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
-}
-```
+#```{r, eval = FALSE}
+#prop_score_model <- function(data) {
+#  glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
+#}
+#```
 
 ## Introducing IPW estimator
 
@@ -309,11 +310,11 @@ We overestimated the true ACE (which is 10) if we wrongly specified the model fo
 
 The same (correct) REG model as we've seen before:
 
-```{r, eval = FALSE}
-mean_outcome_model <- function(data) {
-  glm(outcome ~ var_1 + var_2 + treatment, data = data)
-}
-```
+# ```{r, eval = FALSE}
+# mean_outcome_model <- function(data) {
+#   glm(outcome ~ var_1 + var_2 + treatment, data = data)
+# }
+# ```
 
 ```{r, eval = FALSE}
 outcome_model_estimator <- function(data) {
@@ -413,12 +414,12 @@ Let's analyze DRE's performance under following settings:
 
 Let's explore what happens to DRE when something goes wrong!
 
-```{r}
-prop_score_model <- function(data) {
-  # OOPS! I forgot var_2
-  glm(treatment ~ var_1, data = data, family = 'binomial')
-}
-```
+# ```{r}
+# prop_score_model_w <- function(data) {
+#   # OOPS! I forgot var_2
+#   glm(treatment ~ var_1, data = data, family = 'binomial')
+# }
+# ```
 
 ```{r, echo = FALSE}
 # DRE: IPW incorrect
@@ -457,12 +458,12 @@ The mean of estimates are above 10, indicating an overestimate of ACE. But this 
 ### When REG is incorrect, IPW is correct
 
 
-```{r,eval=F}
-mean_outcome_model_w <- function(data) {
-  # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
-  glm(outcome ~ var_1 + treatment, data = data)
-}
-```
+# ```{r,eval=F}
+# mean_outcome_model_w <- function(data) {
+#   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
+#   glm(outcome ~ var_1 + treatment, data = data)
+# }
+# ```
 
 
 ```{r, echo = FALSE}
@@ -501,16 +502,16 @@ Although it performed worse than the first scenario in DRE (when both REG and IP
 
 Let’s look at what happens to DRE estimation when both models are incorrectly identified. From previous slides, we learned how robust DRE is - its unbiasedness holds even if one of the models is incorrect, but this is not the case here!
 
-```{r}
-prop_score_model_w<- function(data) {
-  # OOPS! I forgot var_2
-  glm(treatment ~ var_1, data = data, family = 'binomial')
-}
-mean_outcome_model_w <- function(data) {
-  # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
-  glm(outcome ~ var_1 + treatment, data = data)
-}
-```
+# ```{r}
+# prop_score_model_w<- function(data) {
+#   # OOPS! I forgot var_2
+#   glm(treatment ~ var_1, data = data, family = 'binomial')
+# }
+# mean_outcome_model_w <- function(data) {
+#   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
+#   glm(outcome ~ var_1 + treatment, data = data)
+# }
+# ```
 
 
 ```{r}
@@ -563,19 +564,24 @@ nested_bw_df %>%
 e <- ggplot(nested_pe_df, aes(x=simu_id, y=dre, group=1)) +
   geom_boxplot()+
   geom_hline(yintercept = 10, color='red')+
-  ylim(7,14)+
+  ylim(7.5,13.5)+
   theme_bw()
 f <- ggplot(nested_om_df, aes(x=simu_id, y=dre, group=1))+
   geom_boxplot()+
   geom_hline(yintercept = 10, color='red')+
-  ylim(7,14)+
+  ylim(7.5,13.5)+
   theme_bw()
 g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre_w, group=1))+
   geom_boxplot()+
   geom_hline(yintercept = 10, color='red')+
-  ylim(7,14)+
+  ylim(7.5,13.5)+
   theme_bw()
-plot_grid(e, f, g, labels=c("Incorrect IPW", "Incorrect REG", "Both Incorrect"), ncol = 3, nrow = 1)
+h <- ggplot(nested_df, aes(x=simu_id, y=dre, group=1))+
+  geom_boxplot()+
+  geom_hline(yintercept = 10, color='red')+
+  ylim(7.5,13.5)+
+  theme_bw()
+plot_grid(h, e, f, g, labels=c("Both Correct", "Incorrect IPW", "Incorrect REG", "Both Incorrect"), ncol = 4, nrow = 1)
 ```
 
 
