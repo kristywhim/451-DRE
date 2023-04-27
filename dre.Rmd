@@ -6,6 +6,21 @@ description: |
 
 # DRE is a combined method from REG and IPW {#dre}
 
+In the previous two sections, we used REG and IPW to recover the mean outcome when the population received treatment (A=1) and when the population did not receive the treatment (A=0) and form ACE formulas. We assumed we specified the correct model for both approaches, which allowed us to build an unbiased model. However, the assumption does not always hold, and it is often unrealistic and incapable of defining the model that involves all relevant confounding variables, measured and unmeasured.
+
+To address this limitation that both estimators have, it will be nice to combine the outcome regression model with a model for the exposure to estimate the causal effect of an exposure on an outcome, which forms the double robust estimator. It combines these 2 approaches such that only 1 of the 2 models needs to be correctly specified to make unbiasedness holds. 
+We construct a combined estimator such that if we construct one model correctly (REG or IPW), our combined estimator will produce unbiased estimates of the average causal effect. More importantly, we don’t need to know which of the two models is correctly specified (REG or IPW); just that at least one is correctly specified is enough. In simple words, it means that we don’t put all of our eggs in one basket with one approach, rather we reduce our risk of getting a biased model by having two shots at getting the answer correct.  
+
+
+**Properties of DRE**
+
+Because of its hybrid feature, DRE has better flexibility and robustness to model misspecification, which allows it to be less biased and useful in situations with uncertainty about the adequacy of the adjustment for confounding. Since this method has been applied in various fields to estimate the average causal effects of interventions, policies, and programs that are closely related to our lives. Therefore, understanding the principles of double robustness estimation and applying this method to real-world data is critical for drawing causal inferences from observational data.
+
+In the following section, we are going to use this DRE model that contains the binary treatment variable **A** and the continuous outcome variable **Y** to prove the unbiasedness in different conditions.
+
+Below are equations showing how DRE estimates the average causal effect.
+
+
 $$
 \begin{gathered}
 \widehat{D R E}_{a=1}=\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i}\left(Y_{i}-\widehat{Y}_{i}^{a=1}\right)}{\widehat{P S}_{i}}+\widehat{Y}_{i}^{a=1}\right) \\
@@ -30,7 +45,7 @@ The variables in the DRE above are as follows:
   
   - $\boldsymbol{n}$ : total number of observations in the observed dataset
 
-Under correct specification of the Outcome or Intervention Model, the following equalities hold:
+Under correct specification of either the Outcome Regression (REG) or Inverse Probability Weighting Model (IPW), the following equalities hold:
 
 $$
 \begin{aligned}
@@ -40,10 +55,11 @@ E\left[\widehat{D R E}_{a=1}-\widehat{D R E}_{a=0}\right] & =E\left[Y^{a=1}\righ
 \end{aligned}
 $$
 
-
-## Properties of DRE
-
 # Proof of DRE's unbiasedness
+
+We have talked about how DRE is robust and unbiased when either REG and IPW model is incorrect. Let's take it in more depth and see how this works! We will divide this into two scenarios: 
+1.    when IPW is incorrect 
+2.    when REG is incorrect.
 
 ## When IPW is misspecified, but REG is correct
 
