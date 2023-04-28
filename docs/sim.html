@@ -455,8 +455,8 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
 
   <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
-  <link href="site_libs/font-awesome-6.2.1/css/all.min.css" rel="stylesheet"/>
-  <link href="site_libs/font-awesome-6.2.1/css/v4-shims.min.css" rel="stylesheet"/>
+  <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
+  <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
   <script src="site_libs/headroom-0.9.4/headroom.min.js"></script>
   <script src="site_libs/autocomplete-0.37.1/autocomplete.min.js"></script>
   <script src="site_libs/fuse-6.4.1/fuse.min.js"></script>
@@ -2071,7 +2071,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </script>
 
   <!--/radix_placeholder_distill-->
-  <script src="site_libs/header-attrs-2.21/header-attrs.js"></script>
+  <script src="site_libs/header-attrs-2.17/header-attrs.js"></script>
   <script src="site_libs/popper-2.6.0/popper.min.js"></script>
   <link href="site_libs/tippy-6.2.7/tippy.css" rel="stylesheet" />
   <link href="site_libs/tippy-6.2.7/tippy-light-border.css" rel="stylesheet" />
@@ -2133,28 +2133,24 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li><p><em>Combining Idea 1 and 2</em>: To form doubly robust estimator</p></li>
 </ul>
 <hr />
-<div class="layout-chunk" data-layout="l-body">
-
-</div>
 <h1 id="setting-up-data">Setting up data</h1>
 <p>We assign <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> as causal variables, and define a true ACE of 10.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>simu_observational_data</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>simu_id</span> <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>n_obs</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span>  <span class='va'>X_1</span>    <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span></span>
-<span>  <span class='va'>X_2</span>    <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span></span>
-<span>  <span class='va'>XB</span>     <span class='op'>&lt;-</span> <span class='fl'>0.2</span><span class='op'>*</span><span class='va'>X_1</span> <span class='op'>+</span> <span class='fl'>0.2</span><span class='op'>*</span><span class='va'>X_2</span></span>
-<span>  <span class='va'>prob_A</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span><span class='op'>(</span><span class='va'>XB</span><span class='op'>)</span> <span class='op'>/</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span><span class='op'>(</span><span class='va'>XB</span><span class='op'>)</span><span class='op'>)</span></span>
-<span>  <span class='va'>A</span>      <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Binomial.html'>rbinom</a></span><span class='op'>(</span><span class='va'>n_obs</span>, <span class='fl'>1</span>, <span class='va'>prob_A</span><span class='op'>)</span></span>
-<span>  </span>
-<span>  <span class='co'># We set the causal effect of treatment A is 10</span></span>
-<span>  <span class='va'>Y</span>      <span class='op'>&lt;-</span> <span class='fl'>100</span> <span class='op'>+</span> <span class='va'>X_1</span> <span class='op'>+</span> <span class='va'>X_2</span> <span class='op'>+</span> <span class='fl'>10</span><span class='op'>*</span><span class='va'>A</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span> </span>
-<span>  </span>
-<span>  <span class='co'># summarize variables into a data frame</span></span>
-<span>  <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>simu_id <span class='op'>=</span> <span class='va'>simu_id</span>, n_obs <span class='op'>=</span> <span class='va'>n_obs</span>, </span>
-<span>             var_1 <span class='op'>=</span> <span class='va'>X_1</span>, var_2 <span class='op'>=</span> <span class='va'>X_2</span>, </span>
-<span>             treatment <span class='op'>=</span> <span class='va'>A</span>, outcome <span class='op'>=</span> <span class='va'>Y</span><span class='op'>)</span>  </span>
-<span><span class='op'>}</span> </span></code></pre>
+<span>    <span class='va'>X_1</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span></span>
+<span>    <span class='va'>X_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span></span>
+<span>    <span class='va'>XB</span> <span class='op'>&lt;-</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>X_1</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>X_2</span></span>
+<span>    <span class='va'>prob_A</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span><span class='op'>(</span><span class='va'>XB</span><span class='op'>)</span><span class='op'>/</span><span class='op'>(</span><span class='fl'>1</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>exp</a></span><span class='op'>(</span><span class='va'>XB</span><span class='op'>)</span><span class='op'>)</span></span>
+<span>    <span class='va'>A</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/Binomial.html'>rbinom</a></span><span class='op'>(</span><span class='va'>n_obs</span>, <span class='fl'>1</span>, <span class='va'>prob_A</span><span class='op'>)</span></span>
+<span></span>
+<span>    <span class='co'># We set the true causal effect of treatment A is 10</span></span>
+<span>    <span class='va'>Y</span> <span class='op'>&lt;-</span> <span class='fl'>100</span> <span class='op'>+</span> <span class='va'>X_1</span> <span class='op'>+</span> <span class='va'>X_2</span> <span class='op'>+</span> <span class='fl'>10</span> <span class='op'>*</span> <span class='va'>A</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n_obs</span><span class='op'>)</span></span>
+<span></span>
+<span>    <span class='co'># summarize variables into a data frame</span></span>
+<span>    <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>simu_id <span class='op'>=</span> <span class='va'>simu_id</span>, n_obs <span class='op'>=</span> <span class='va'>n_obs</span>, var_1 <span class='op'>=</span> <span class='va'>X_1</span>, var_2 <span class='op'>=</span> <span class='va'>X_2</span>,</span>
+<span>        treatment <span class='op'>=</span> <span class='va'>A</span>, outcome <span class='op'>=</span> <span class='va'>Y</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
 </div>
 </div>
 <h2 id="ipw-model">IPW model</h2>
@@ -2272,6 +2268,41 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </div>
 </div>
 <p>Then, we create the simulated dataset for all estimators and expected value from IPW, REG, and DRE models.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>n_simu</span> <span class='op'>&lt;-</span> <span class='fl'>150</span></span>
+<span><span class='va'>n_obs</span> <span class='op'>&lt;-</span> <span class='fl'>200</span></span>
+<span></span>
+<span><span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span></span>
+<span></span>
+<span><span class='va'>nested_df</span> <span class='op'>&lt;-</span> </span>
+<span>  <span class='fu'>purrr</span><span class='fu'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>map2_dfr</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='va'>n_simu</span>, <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='va'>n_obs</span>, <span class='va'>n_simu</span><span class='op'>)</span>, <span class='va'>simu_observational_data</span><span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span><span class='op'>(</span><span class='va'>simu_id</span><span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>  <span class='fu'><a href='https://tidyr.tidyverse.org/reference/nest.html'>nest</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span></span>
+<span>    <span class='co'># correct ipw model</span></span>
+<span>    prop_model     <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_score_model</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># incorrect ipw model</span></span>
+<span>    prop_model_w   <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_score_model_w</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># correct reg model</span></span>
+<span>    mean_model     <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>mean_outcome_model</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># incorrect reg model</span></span>
+<span>    mean_model_w   <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>mean_outcome_model_w</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># correct reg estimation</span></span>
+<span>    model_estimate <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>outcome_model_estimator</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># incorrect reg estimation</span></span>
+<span>    model_estimate_w <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>outcome_model_estimator_w</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># correct ipw estimation</span></span>
+<span>    ipw_estimate   <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>map2</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_model</span>, <span class='va'>ipw_estimator</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># incorrect ipw estimation</span></span>
+<span>    ipw_estimate_w <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>map2</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_model_w</span>, <span class='va'>ipw_estimator_w</span><span class='op'>)</span>,</span>
+<span>    <span class='co'># generate dre estimation</span></span>
+<span>    dr_estimate    <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>pmap</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_model</span>, <span class='va'>mean_model</span><span class='op'>)</span>, <span class='va'>dr_estimator</span><span class='op'>)</span></span>
+<span>  <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>ungroup</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
+<span>  <span class='fu'><a href='https://tidyr.tidyverse.org/reference/nest.html'>unnest</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>model_estimate</span>, <span class='va'>model_estimate_w</span>, <span class='va'>ipw_estimate</span>, <span class='va'>ipw_estimate_w</span>, <span class='va'>dr_estimate</span><span class='op'>)</span><span class='op'>)</span></span></code></pre>
+</div>
+</div>
 <p>Now, we have five models: IPW (both correct and incorrect), REG (both correct and incorrect), and DRE.</p>
 <hr />
 <h1 id="strategy-1-inverse-probability-weighting-ipw">Strategy 1: Inverse Probability Weighting (IPW)</h1>
@@ -2283,7 +2314,13 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li><p>Reminder: propensity score is just a logistic regression of the probability of receiving the treatment, giving their <span class="math inline">\(Z\)</span> values (confounders)</p></li>
 </ul>
 <p>In our example, we proposed the correct IPW model:</p>
-<p>#<code>{r, eval = FALSE} #prop_score_model &lt;- function(data) { #  glm(treatment ~ var_1 + var_2, data = data, family = 'binomial') #} #</code></p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>prop_score_model</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span>    <span class='fu'><a href='https://rdrr.io/r/stats/glm.html'>glm</a></span><span class='op'>(</span><span class='va'>treatment</span> <span class='op'>~</span> <span class='va'>var_1</span> <span class='op'>+</span> <span class='va'>var_2</span>, data <span class='op'>=</span> <span class='va'>data</span>, family <span class='op'>=</span> <span class='st'>"binomial"</span><span class='op'>)</span></span>
+<span><span class='op'>}</span></span></code></pre>
+</div>
+</div>
 <h2 id="introducing-ipw-estimator">Introducing IPW estimator</h2>
 <ul>
 <li>Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment (propensity score <span class="math inline">\(\widehat {PS_i}\)</span>)</li>
@@ -2293,51 +2330,46 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>ipw_estimator</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>model</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span>  <span class='va'>data</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
-<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span></span>
-<span>      prob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>model</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>'response'</span><span class='op'>)</span>,</span>
-<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
-<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarise</a></span><span class='op'>(</span></span>
-<span>      EYB_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>treatment</span><span class='op'>)</span> <span class='op'>/</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>)</span>,</span>
-<span>      EYA_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='va'>treatment</span> <span class='op'>/</span> <span class='va'>prob</span><span class='op'>)</span></span>
-<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
-<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>ipw <span class='op'>=</span> <span class='va'>EYA_ipw</span> <span class='op'>-</span> <span class='va'>EYB_ipw</span><span class='op'>)</span></span>
+<span>    <span class='va'>data</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span></span>
+<span>        <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>prob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>model</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>"response"</span><span class='op'>)</span>,</span>
+<span>            <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span></span>
+<span>        <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarise</a></span><span class='op'>(</span>EY0_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span> <span class='op'>*</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>treatment</span><span class='op'>)</span><span class='op'>/</span><span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span>            EY1_ipw <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>outcome</span> <span class='op'>*</span> <span class='va'>treatment</span><span class='op'>/</span><span class='va'>prob</span><span class='op'>)</span><span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span></span>
+<span>        <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>ipw <span class='op'>=</span> <span class='va'>EY1_ipw</span> <span class='op'>-</span> <span class='va'>EY0_ipw</span><span class='op'>)</span></span>
 <span><span class='op'>}</span></span></code></pre>
 </div>
 </div>
 <h2 id="ipw-performance">IPW Performance</h2>
 <p>Plot for correct IPW</p>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-13-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-14-1.png" width="624" /></p>
 </div>
-<p>The plot shows the data points are evenly spread around 10, and the mean of correct IPW estimate is 10.07, which is close to the true ACE we set.</p>
+<p>The plot shows the data points are evenly spread around 10, and the mean of correct IPW estimate is 10, which is very close to the true ACE we set.</p>
 <h2 id="ipw-could-fail">IPW could fail</h2>
 <ul>
 <li>If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail. We used the biased ipw results from the ‘nested_df’ dataset.</li>
 </ul>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-14-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-15-1.png" width="624" /></p>
 </div>
 <p>The plot shows a obvious trend that all data points from biased IPW model shift upward, which the ACE for incorrect IPW model is higher than the ACE=10 we set in the beginning.</p>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-15-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-16-1.png" width="624" /></p>
 </div>
 <p>We overestimated the true ACE (which is 10) if we wrongly specified the model form in IPW setting.</p>
 <hr />
 <h1 id="strategy-2-reg-estimator-model-the-outcome">Strategy 2: REG estimator (model the outcome)</h1>
-<p>The same (correct) REG model as we’ve seen before:</p>
-<h1 id="r-eval-false-mean_outcome_model---functiondata-glmoutcome-var_1-var_2-treatment-data-data"><code>{r, eval = FALSE} # mean_outcome_model &lt;- function(data) { #   glm(outcome ~ var_1 + var_2 + treatment, data = data) # } #</code></h1>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>outcome_model_estimator</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span>   <span class='va'>mean_model</span> <span class='op'>&lt;-</span> <span class='fu'>mean_outcome_model</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span></span>
-<span>   <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>mean_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>coefficients</span><span class='op'>[</span><span class='st'>'treatment'</span>, <span class='op'>]</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span></span>
+<span>    <span class='va'>mean_model</span> <span class='op'>&lt;-</span> <span class='fu'>mean_outcome_model</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span></span>
+<span>    <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>mean_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>coefficients</span><span class='op'>[</span><span class='st'>"treatment"</span>, <span class='op'>]</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span></span>
 <span><span class='op'>}</span></span></code></pre>
 </div>
 </div>
 <h2 id="reg-performance">REG Performance</h2>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-17-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-18-1.png" width="624" /></p>
 </div>
 <p>When outcome model is correctly modelled, this shows unbiased estimation of ACE.</p>
 <h2 id="reg-could-also-fail">REG could also fail</h2>
@@ -2345,10 +2377,10 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <li>If the model for Y is incorrect (as we recalled we left <em>var_2</em> out), it will cause bias in the REG outcome model, which cause the model to fail.</li>
 </ul>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-18-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-19-1.png" width="624" /></p>
 </div>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-19-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-20-1.png" width="624" /></p>
 </div>
 <p>We also overestimated the true ACE (10) if our REG model is mis-specified.</p>
 <hr />
@@ -2365,72 +2397,68 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p>where <span class="math inline">\(\pi(Z_i)=\widehat {PS_i}\)</span> (propensity score from IPW), and <span class="math inline">\(\mu(Z_i, A_i)=E[Y|A=1,Z]\)</span> (this is the part of outcome regression model in DRE model). The term in red is said to <em>augment</em> the IPW estimator.</p>
 <h3 id="when-ipw-and-reg-both-correct">When IPW and REG both correct</h3>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-20-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-21-1.png" width="624" /></p>
 </div>
 <p>This is fine - we have a very unbiased estimation.</p>
 <hr />
 <p>Let’s analyze DRE’s performance under following settings:</p>
 <h3 id="when-ipw-is-incorrect-reg-is-correct">When IPW is Incorrect, REG is correct</h3>
 <p>Let’s explore what happens to DRE when something goes wrong!</p>
-<h1 id="r-prop_score_model_w---functiondata-oops-i-forgot-var_2-glmtreatment-var_1-data-data-family-binomial"><code>{r} # prop_score_model_w &lt;- function(data) { #   # OOPS! I forgot var_2 #   glm(treatment ~ var_1, data = data, family = 'binomial') # } #</code></h1>
 <div class="layout-chunk" data-layout="l-body">
 
 </div>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-22-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-23-1.png" width="624" /></p>
 </div>
 <p>The mean of estimates are above 10, indicating an overestimate of ACE. But this is still acceptable considering IPW is wrongly assigned - this is not too bad.</p>
 <hr />
 <h3 id="when-reg-is-incorrect-ipw-is-correct">When REG is incorrect, IPW is correct</h3>
-<h1 id="revalf-mean_outcome_model_w---functiondata-how-could-i-forgotten-var_2-i-am-so-dumb-glmoutcome-var_1-treatment-data-data"><code>{r,eval=F} # mean_outcome_model_w &lt;- function(data) { #   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB! #   glm(outcome ~ var_1 + treatment, data = data) # } #</code></h1>
 <div class="layout-chunk" data-layout="l-body">
 
 </div>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-24-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-25-1.png" width="624" /></p>
 </div>
 <p>Although it performed worse than the first scenario in DRE (when both REG and IPW are correctly specified), the mean of this estimation is still fair and we can say it maintains robustness.</p>
 <h3 id="when-both-reg-and-ipw-are-incorrect---dre-fails">When both REG and IPW are incorrect - DRE fails!!</h3>
 <p>Let’s look at what happens to DRE estimation when both models are incorrectly identified. From previous slides, we learned how robust DRE is - its unbiasedness holds even if one of the models is incorrect, but this is not the case here!</p>
-<h1 id="r-prop_score_model_w--functiondata-oops-i-forgot-var_2-glmtreatment-var_1-data-data-family-binomial-mean_outcome_model_w---functiondata-how-could-i-forgotten-var_2-i-am-so-dumb-glmoutcome-var_1-treatment-data-data"><code>{r} # prop_score_model_w&lt;- function(data) { #   # OOPS! I forgot var_2 #   glm(treatment ~ var_1, data = data, family = 'binomial') # } # mean_outcome_model_w &lt;- function(data) { #   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB! #   glm(outcome ~ var_1 + treatment, data = data) # } #</code></h1>
-<div class="layout-chunk" data-layout="l-body">
-<div class="sourceCode">
-<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>dr_estimator_w</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_model_w</span>, <span class='va'>mean_model_w</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span>  <span class='va'>data</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
-<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span></span>
-<span>      prob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>prop_model_w</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>'response'</span><span class='op'>)</span>,</span>
-<span>      pred <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>mean_model_w</span>, newdata <span class='op'>=</span> <span class='va'>data</span>, type <span class='op'>=</span> <span class='st'>'response'</span><span class='op'>)</span>,</span>
-<span>      augm <span class='op'>=</span> <span class='op'>(</span><span class='va'>treatment</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>*</span><span class='va'>pred</span></span>
-<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
-<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarise</a></span><span class='op'>(</span></span>
-<span>      EY0_dr <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>treatment</span><span class='op'>)</span> <span class='op'>-</span> <span class='va'>augm</span><span class='op'>)</span> <span class='op'>/</span> <span class='op'>(</span><span class='fl'>1</span> <span class='op'>-</span> <span class='va'>prob</span><span class='op'>)</span><span class='op'>)</span>,</span>
-<span>      EY1_dr <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='op'>(</span><span class='va'>outcome</span><span class='op'>*</span><span class='va'>treatment</span> <span class='op'>-</span> <span class='va'>augm</span><span class='op'>)</span> <span class='op'>/</span> <span class='va'>prob</span><span class='op'>)</span></span>
-<span>    <span class='op'>)</span> <span class='op'><a href='https://magrittr.tidyverse.org/reference/pipe.html'>%&gt;%</a></span> </span>
-<span>    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>dre_w <span class='op'>=</span> <span class='va'>EY1_dr</span> <span class='op'>-</span> <span class='va'>EY0_dr</span><span class='op'>)</span></span>
-<span><span class='op'>}</span></span></code></pre>
-</div>
-</div>
 <div class="layout-chunk" data-layout="l-body">
 
 </div>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-27-1.png" width="624" /></p>
+<p><img src="sim_files/figure-html5/unnamed-chunk-28-1.png" width="624" /></p>
 </div>
 <div class="layout-chunk" data-layout="l-body">
-<p><img src="sim_files/figure-html5/unnamed-chunk-28-1.png" width="624" /></p>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>nested_df</span><span class='op'>$</span><span class='va'>dre</span><span class='op'>)</span></span></code></pre>
+</div>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  5.276   9.363   9.894   9.933  10.536  15.268 </code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>nested_pe_df</span><span class='op'>$</span><span class='va'>dre</span><span class='op'>)</span>  <span class='co'>#IPW wrong</span></span></code></pre>
+</div>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.378   9.661  10.132  10.165  10.696  13.989 </code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>nested_om_df</span><span class='op'>$</span><span class='va'>dre</span><span class='op'>)</span></span></code></pre>
+</div>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  5.344   9.341   9.898   9.931  10.537  15.180 </code></pre>
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>nested_bw_df</span><span class='op'>$</span><span class='va'>dre_w</span><span class='op'>)</span></span></code></pre>
+</div>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.421   9.662  10.121  10.165  10.701  13.971 </code></pre>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="sim_files/figure-html5/unnamed-chunk-30-1.png" width="624" /></p>
 </div>
 <p>This boxplot shows the summary of three DRE estimation in the three scenario we simulated. When both are incorrect, the mean of this estimation is far away from 10 (the true ACE, indicated by the red line).</p>
 <hr />
 <h1 id="conclusion">Conclusion</h1>
 <p>This simulation activity shows how effective DRE is - that its effectiveness depends on correct model specification or outcome regression model (REG), or inverse Probability weighting by propensity score (IPW). Its robustness is maintained when one of the models is incorrect.</p>
 <p>From previous work, we have also identified and learned why DRE is unbiased when either of them is incorrect. If we have non-randomized trial experiments, we can surely apply methods introduced here today!</p>
-<hr />
-<h1 id="references">References</h1>
-<ul>
-<li>Lunceford, Jared K., and Marie Davidian. “Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study.” Statistics in medicine 23.19 (2004): 2937-2960.</li>
-<li>YouTube. (2020). Dr. Sebastian Teran Hidalgo - Doubly Robust Estimation of Causal Effects in R. YouTube. Retrieved April 24, 2023, from <a href="https://www.youtube.com/watch?v=5rSTEzp_n48" class="uri">https://www.youtube.com/watch?v=5rSTEzp_n48</a>.</li>
-</ul>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

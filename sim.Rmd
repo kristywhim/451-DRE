@@ -15,8 +15,8 @@ description: |
 
 ---
 
-```{r, echo=F}
-knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE, cache= T)
+```{r, include =F}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, tidy = TRUE, cache= T)
 ```
 
 
@@ -31,7 +31,6 @@ library(ggplot2)
 library(knitr)
 library(gridExtra)
 library(cowplot)
-set.seed(451)
 ```
 
 
@@ -47,7 +46,7 @@ simu_observational_data <- function(simu_id = 1, n_obs) {
   prob_A <- exp(XB) / (1 + exp(XB))
   A      <- rbinom(n_obs, 1, prob_A)
   
-  # We set the causal effect of treatment A is 10
+  # We set the true causal effect of treatment A is 10
   Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs) 
   
   # summarize variables into a data frame
@@ -172,9 +171,11 @@ dr_estimator <- function(data, prop_model, mean_model) {
 
 Then, we create the simulated dataset for all estimators and expected value from IPW, REG, and DRE models. 
 
-```{r, include=FALSE}
+```{r}
 n_simu <- 150
 n_obs <- 200
+
+set.seed(1)
 
 nested_df <- 
   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
@@ -222,11 +223,11 @@ Now, we have five models: IPW (both correct and incorrect), REG (both correct an
 
 In our example, we proposed the correct IPW model:
 
-#```{r, eval = FALSE}
-#prop_score_model <- function(data) {
-#  glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
-#}
-#```
+```{r, eval = FALSE}
+prop_score_model <- function(data) {
+  glm(treatment ~ var_1 + var_2, data = data, family = 'binomial')
+}
+```
 
 ## Introducing IPW estimator
 
@@ -243,10 +244,10 @@ ipw_estimator <- function(data, model) {
       prob = predict(model, newdata = data, type = 'response'),
     ) %>% 
     summarise(
-      EYB_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
-      EYA_ipw = mean(outcome*treatment / prob)
+      EY0_ipw = mean(outcome*(1 - treatment) / (1 - prob)),
+      EY1_ipw = mean(outcome*treatment / prob)
     ) %>% 
-    mutate(ipw = EYA_ipw - EYB_ipw)
+    mutate(ipw = EY1_ipw - EY0_ipw)
 }
 ```
 
@@ -267,7 +268,7 @@ nested_df %>%
   theme_bw()
 ```
 
-The plot shows the data points are evenly spread around 10, and the mean of correct IPW estimate is 10.07, which is close to the true ACE we set. 
+The plot shows the data points are evenly spread around 10, and the mean of correct IPW estimate is 10, which is very close to the true ACE we set. 
 
 ## IPW could fail
 
@@ -308,13 +309,7 @@ We overestimated the true ACE (which is 10) if we wrongly specified the model fo
 
 # Strategy 2: REG estimator (model the outcome)
 
-The same (correct) REG model as we've seen before:
 
-# ```{r, eval = FALSE}
-# mean_outcome_model <- function(data) {
-#   glm(outcome ~ var_1 + var_2 + treatment, data = data)
-# }
-# ```
 
 ```{r, eval = FALSE}
 outcome_model_estimator <- function(data) {
@@ -414,15 +409,10 @@ Let's analyze DRE's performance under following settings:
 
 Let's explore what happens to DRE when something goes wrong!
 
-# ```{r}
-# prop_score_model_w <- function(data) {
-#   # OOPS! I forgot var_2
-#   glm(treatment ~ var_1, data = data, family = 'binomial')
-# }
-# ```
 
 ```{r, echo = FALSE}
 # DRE: IPW incorrect
+set.seed(1)
 nested_pe_df <- 
   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
   group_by(simu_id) %>% 
@@ -436,17 +426,15 @@ nested_pe_df <-
   ) %>% 
   ungroup() %>% 
   unnest(c(model_estimate, ipw_estimate_w, dr_estimate))
+
 ```
 
 
 ```{r, echo = FALSE}
-mean_dre_estimator <- 
-  mean(nested_pe_df$dre)
-
 nested_pe_df %>% 
   ggplot(aes(x = simu_id, y = dre)) +
   geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate (IPW misspecified) is ', round(mean_dre_estimator, 2))) + 
+  ggtitle(paste('The mean of the DRE estimate (IPW misspecified) is ', round(mean(nested_pe_df$dre), 2))) + 
   geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
@@ -458,16 +446,10 @@ The mean of estimates are above 10, indicating an overestimate of ACE. But this 
 ### When REG is incorrect, IPW is correct
 
 
-# ```{r,eval=F}
-# mean_outcome_model_w <- function(data) {
-#   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
-#   glm(outcome ~ var_1 + treatment, data = data)
-# }
-# ```
-
-
 ```{r, echo = FALSE}
 # REG incorrect, IPW correct
+set.seed(1)
+
 nested_om_df <- 
   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
   group_by(simu_id) %>% 
@@ -484,13 +466,10 @@ nested_om_df <-
 ```
 
 ```{r, echo = FALSE}
-mean_dre_estimator <- 
-  mean(nested_om_df$dre)
-
 nested_om_df %>% 
   ggplot(aes(x = simu_id, y = dre)) +
   geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate (REG misspecified) is ', round(mean_dre_estimator, 2))) + 
+  ggtitle(paste('The mean of the DRE estimate (REG misspecified) is ', round(mean(nested_om_df$dre), 2))) + 
   geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
@@ -502,19 +481,8 @@ Although it performed worse than the first scenario in DRE (when both REG and IP
 
 Let’s look at what happens to DRE estimation when both models are incorrectly identified. From previous slides, we learned how robust DRE is - its unbiasedness holds even if one of the models is incorrect, but this is not the case here!
 
-# ```{r}
-# prop_score_model_w<- function(data) {
-#   # OOPS! I forgot var_2
-#   glm(treatment ~ var_1, data = data, family = 'binomial')
-# }
-# mean_outcome_model_w <- function(data) {
-#   # HOW COULD I FORGOTTEN var_2??!?! I AM SO DUMB!
-#   glm(outcome ~ var_1 + treatment, data = data)
-# }
-# ```
 
-
-```{r}
+```{r, include=F}
 dr_estimator_w <- function(data, prop_model_w, mean_model_w) {
   data %>% 
     mutate(
@@ -532,6 +500,7 @@ dr_estimator_w <- function(data, prop_model_w, mean_model_w) {
 
 ```{r, echo = FALSE}
 # Both wrong
+set.seed(1)
 nested_bw_df <- 
   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>% 
   group_by(simu_id) %>% 
@@ -548,19 +517,30 @@ nested_bw_df <-
 ```
 
 ```{r, echo = FALSE}
-mean_dre_estimator <- 
-  mean(nested_bw_df$dre_w)
-
 nested_bw_df %>% 
   ggplot(aes(x = simu_id, y = dre_w)) +
   geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate (both incorrect) is ', round(mean_dre_estimator, 2))) + 
+  ggtitle(paste('The mean of the DRE estimate (both incorrect) is ', round(mean(nested_bw_df$dre_w), 2))) + 
   geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 ```
 
+```{r}
+summary(nested_df$dre)
+summary(nested_pe_df$dre) #IPW wrong
+summary(nested_om_df$dre)
+summary(nested_bw_df$dre_w) 
+```
+
 
 ```{r, echo=F}
+
+h <- ggplot(nested_df, aes(x=simu_id, y=dre, group=1))+
+  geom_boxplot()+
+  geom_hline(yintercept = 10, color='red')+
+  ylim(7.5,13.5)+
+  theme_bw()
+
 e <- ggplot(nested_pe_df, aes(x=simu_id, y=dre, group=1)) +
   geom_boxplot()+
   geom_hline(yintercept = 10, color='red')+
@@ -576,11 +556,7 @@ g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre_w, group=1))+
   geom_hline(yintercept = 10, color='red')+
   ylim(7.5,13.5)+
   theme_bw()
-h <- ggplot(nested_df, aes(x=simu_id, y=dre, group=1))+
-  geom_boxplot()+
-  geom_hline(yintercept = 10, color='red')+
-  ylim(7.5,13.5)+
-  theme_bw()
+
 plot_grid(h, e, f, g, labels=c("Both Correct", "Incorrect IPW", "Incorrect REG", "Both Incorrect"), ncol = 4, nrow = 1)
 ```
 
@@ -594,10 +570,3 @@ This boxplot shows the summary of three DRE estimation in the three scenario we 
 This simulation activity shows how effective DRE is - that its effectiveness depends on correct model specification or outcome regression model (REG), or inverse Probability weighting by propensity score (IPW). Its robustness is maintained when one of the models is incorrect.
 	
 From previous work, we have also identified and learned why DRE is unbiased when either of them is incorrect. If we have non-randomized trial experiments, we can surely apply methods introduced here today!
-
----
-
-# References
-
-- Lunceford, Jared K., and Marie Davidian. "Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study." Statistics in medicine 23.19 (2004): 2937-2960.
-- YouTube. (2020). Dr. Sebastian Teran Hidalgo - Doubly Robust Estimation of Causal Effects in R. YouTube. Retrieved April 24, 2023, from https://www.youtube.com/watch?v=5rSTEzp_n48.

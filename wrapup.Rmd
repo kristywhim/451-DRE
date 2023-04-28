@@ -1,7 +1,18 @@
 ---
 title: "Wrap-up and Conclusion"
 description: |
-  Some additional details about the website
 ---
 
-# Title {#wrapup}
+That summarizes our exploration on doubly robust estimator!
+
+If you are interested in more details, this [links](https://psantanna.com/files/Callaway_SantAnna_2020.pdf) to a cool paper from *Callaway and Sant'Anna (2020)* on using methods similar to doubly robust estimator described here to measure dynamic treatment effects in economic DiD experiments (difference-in-difference) studies. The paper discusses the common estimation and interference procedures for measuring treatment effects in varying time periods.
+
+Thank you for reading and having the interest on our project!
+
+**Reference**:
+
+> 1.  "Doubly Robust Estimators - Inverse Probability of Treatment Weighting (IPTW)." Coursera, www.coursera.org/lecture/crash-course-in-causality/doubly-robust-estimators-hZjgB. Accessed 28 Apr. 2023.
+> 2.  Hidalgo, Sebastian Jose Teran. "Dr. Sebastian Teran Hidalgo - Doubly Robust Estimation of Causal Effects in R." Www.youtube.com, 7 Oct. 2020, www.youtube.com/watch?v=5rSTEzp_n48. Accessed 28 Apr. 2023.
+> 3.  Hidalgo, Sebastian Jose Teran. "Seborinos/Doubly_robust_nyr_2020." GitHub, 16 Aug. 2020, github.com/Seborinos/doubly_robust_nyr_2020. Accessed 28 Apr. 2023.
+> 4.  Rothman, Andrew. "Doubly Robust Estimators for Causal Inference in Statistical Estimation." Medium, 27 Dec. 2020, towardsdatascience.com/doubly-robust-estimators-for-causal-inference-in-statistical-estimation-3c00847e9db. Accessed 28 Apr. 2023.
+> 5.  Lunceford, Jared K., and Marie Davidian. "Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study." Statistics in medicine 23.19 (2004): 2937-2960.
