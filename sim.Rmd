@@ -534,7 +534,7 @@ summary(nested_bw_df$dre_w)
 
 
 ```{r, echo=F}
-
+# test git
 h <- ggplot(nested_df, aes(x=simu_id, y=dre, group=1))+
   geom_boxplot()+
   geom_hline(yintercept = 10, color='red')+
