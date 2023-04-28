@@ -563,6 +563,7 @@ Let's explore what happens to DRE when something goes wrong!
 
 
 ```{r, echo = FALSE}
+# git test
 # DRE: IPW incorrect
 set.seed(1)
 nested_pe_df <- 
