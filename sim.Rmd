@@ -16,7 +16,7 @@ description: |
 ---
 
 ```{r, include =F}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, tidy = TRUE, cache= T)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, tidy = TRUE, cache= F)
 ```
 
 
@@ -483,53 +483,53 @@ Let’s look at what happens to DRE estimation when both models are incorrectly 
 
 
 ```{r, include=F}
-dr_estimator_w <- function(data, prop_model_w, mean_model_w) {
-  data %>%
-    mutate(
-      prob = predict(prop_model_w, newdata = data, type = 'response'),
-      pred = predict(mean_model_w, newdata = data, type = 'response'),
-      augm = (treatment - prob)*pred
-    ) %>%
-    summarise(
-      EY0_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
-      EY1_dr = mean((outcome*treatment - augm) / prob)
-    ) %>%
-    mutate(dre_w = EY1_dr - EY0_dr)
-}
+# dr_estimator_w <- function(data, prop_model_w, mean_model_w) {
+#   data %>%
+#     mutate(
+#       prob = predict(prop_model_w, newdata = data, type = 'response'),
+#       pred = predict(mean_model_w, newdata = data, type = 'response'),
+#       augm = (treatment - prob)*pred
+#     ) %>%
+#     summarise(
+#       EY0_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
+#       EY1_dr = mean((outcome*treatment - augm) / prob)
+#     ) %>%
+#     mutate(dre_w = EY1_dr - EY0_dr)
+# }
 ```
 
 ```{r, echo = FALSE}
 # Both wrong
-set.seed(1)
-nested_bw_df <-
-  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>%
-  group_by(simu_id) %>%
-  nest() %>%
-  mutate(
-    prop_model_w     = map(data, prop_score_model_w),
-    mean_model_w   = map(data, mean_outcome_model_w),
-    model_estimate_w = map(data, outcome_model_estimator_w),
-    ipw_estimate_w   = map2(data, prop_model_w, ipw_estimator_w),
-    dr_estimate_w    = pmap(list(data, prop_model_w, mean_model_w), dr_estimator_w)
-  ) %>%
-  ungroup() %>%
-  unnest(c(model_estimate_w, ipw_estimate_w, dr_estimate_w))
+# set.seed(1)
+# nested_bw_df <-
+#   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>%
+#   group_by(simu_id) %>%
+#   nest() %>%
+#   mutate(
+#     prop_model_w     = map(data, prop_score_model_w),
+#     mean_model_w   = map(data, mean_outcome_model_w),
+#     model_estimate_w = map(data, outcome_model_estimator_w),
+#     ipw_estimate_w   = map2(data, prop_model_w, ipw_estimator_w),
+#     dr_estimate_w    = pmap(list(data, prop_model_w, mean_model_w), dr_estimator_w)
+#   ) %>%
+#   ungroup() %>%
+#   unnest(c(model_estimate_w, ipw_estimate_w, dr_estimate_w))
 ```
 
 ```{r, echo = FALSE}
-nested_bw_df %>%
-  ggplot(aes(x = simu_id, y = dre_w)) +
-  geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate (both incorrect) is ', round(mean(nested_bw_df$dre_w), 2))) +
-  geom_hline(yintercept = 10) +ylab("ACE estimate")+
-  theme_bw()
+# nested_bw_df %>%
+#   ggplot(aes(x = simu_id, y = dre_w)) +
+#   geom_point(color = 'red') +
+#   ggtitle(paste('The mean of the DRE estimate (both incorrect) is ', round(mean(nested_bw_df$dre_w), 2))) +
+#   geom_hline(yintercept = 10) +ylab("ACE estimate")+
+#   theme_bw()
 ```
 
 ```{r}
 summary(nested_df$dre)
 summary(nested_pe_df$dre) #IPW wrong
 summary(nested_om_df$dre)
-summary(nested_bw_df$dre_w)
+# summary(nested_bw_df$dre_w)
 ```
 
 
@@ -551,13 +551,13 @@ f <- ggplot(nested_om_df, aes(x=simu_id, y=dre, group=1))+
   geom_hline(yintercept = 10, color='red')+
   ylim(7.5,13.5)+
   theme_bw()
-g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre_w, group=1))+
-  geom_boxplot()+
-  geom_hline(yintercept = 10, color='red')+
-  ylim(7.5,13.5)+
-  theme_bw()
+# g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre_w, group=1))+
+#   geom_boxplot()+
+#   geom_hline(yintercept = 10, color='red')+
+#   ylim(7.5,13.5)+
+#   theme_bw()
 
-plot_grid(h, e, f, g, labels=c("Both Correct", "Incorrect IPW", "Incorrect REG", "Both Incorrect"), ncol = 4, nrow = 1)
+plot_grid(h, e, f, labels=c("Both Correct", "Incorrect IPW", "Incorrect REG"), ncol = 3, nrow = 1)
 ```
 
 
