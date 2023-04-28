@@ -202,6 +202,7 @@ nested_df <-
     dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
   ) %>% 
   ungroup() %>% 
+<<<<<<< Updated upstream
   unnest(c(model_estimate, model_estimate_w, ipw_estimate, ipw_estimate_w, dr_estimate))
 ```
 
@@ -210,6 +211,88 @@ Now, we have five models: IPW (both correct and incorrect), REG (both correct an
 ---
 
 # Strategy 1: Inverse Probability Weighting (IPW)
+=======
+  unnest(c(naive_estimate, model_estimate, ipw_estimate, ipw_estimate, dr_estimate))
+```
+
+
+---
+
+# What is Causal Inference in Data Science?
+
+
+- A/B tests are great at allowing us to reach causal claims
+
+- Will A or B cause a *better* outcome? (i.e, will A cause a bigger client retention than B)
+
+- Sometimes we have data on A and B but not generated through a random experiment
+
+- Relying solely on this data won't allow you to make correct causal claims about A and B 
+
+- We can use causal inference methods to try to estimate the causal effect of using A versus B even from a non random experiment
+
+---
+
+# What is this talk about?
+
+- *Goal*: estimate a causal effect when you do not have data from a randomized experiment 
+
+- *Strategy 1*: Re-weighting each observation by the probability of receiving A or B so that the data approximates a randomized experiment 
+
+- *Strategy 2*: Modelling the outcome directly with a linear regression
+
+- *Combining Idea 1 and 2*: To form doubly robust estimator
+
+---
+
+# What is a causal effect?
+
+**Conterfactual difference**: On average receiving treatment $A$ compared to $B$ will cause a difference in the outcome of $\delta$
+
+$$\delta = E[Y(A)] - E[Y(B)]$$
+
+where $Y(A)$ is the outcome if treatment $A$ had been received, and $Y(B)$ is the outcome if treatment $B$ had been received.
+
+**Mean difference**: The average difference in outcomes between those receiving $A$ and $B$
+
+$$E[Y|A] - E[Y|B]$$
+
+- In an A/B test we can estimate the causal effect $\delta$ by a simple difference of means because of randomization
+
+$$E[Y|A] - E[Y|B] = E[Y(A)] - E[Y(B)]$$
+
+- In non randomized data this is not necessarily true
+
+$$E[Y|A] - E[Y|B] \neq E[Y(A)] - E[Y(B)]$$
+
+---
+
+# A non randomized data simulation
+
+--
+
+```{r simu_observational_data, eval = FALSE}
+simu_observational_data <- function(n_obs) {
+  X_1    <- rnorm(n_obs)
+  X_2    <- rnorm(n_obs)
+  XB     <- 0.25*X_1 + 0.25*X_2
+  prob_A <- exp(XB) / (1 + exp(XB)) # This is not an A/B test!
+  A      <- rbinom(n_obs, 1, prob_A) # This is not an A/B test!
+  
+  # The causal effect of receiving A is 10
+  Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs)  
+  
+  data.frame(var_1 = X_1, var_2 = X_2, treatment = A, outcome = Y)  
+} 
+```
+
+- In this case $\delta = E[Y(A)] - E[Y(B)] = 10$
+
+- Unlike a random experiment, the probability of receiving treatment *A* depends on *X_1* and *X_2*
+
+- This makes it difficult to to estimate the causal effect
+
+>>>>>>> Stashed changes
 
 ## Intuition Behind it
 
@@ -217,11 +300,25 @@ Now, we have five models: IPW (both correct and incorrect), REG (both correct an
 
 - In the current case, the probability of receiving the treatment depends on variables that affect the outcome
 
+<<<<<<< Updated upstream
 - If we knew what this probabilities are we could re-weight our sample such that the data would better match a randomized experiment - by creating the "pesudopopulation" (mentioned earlier)
 
 - Reminder: propensity score is just a logistic regression of the probability of receiving the treatment, giving their $Z$ values (confounders)
 
 In our example, we proposed the correct IPW model:
+=======
+- If we knew what this probabilities are we could re-weight our sample such that the data would better match a randomized experiment
+
+- In the re-weighting scheme, units that were very likely to receive the treatment are weighted down and units that were very unlikely to receive the treatment are weighted up
+
+---
+
+# Strategy 1: Inverse Probability Weighting - Propensity Score
+
+- How do we estimate these probabilities? 
+
+- The propensity score is just a logistic regression of the probability of receiving the treatment
+>>>>>>> Stashed changes
 
 ```{r, eval = FALSE}
 prop_score_model <- function(data) {
@@ -235,7 +332,13 @@ prop_score_model <- function(data) {
 
 $$\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{E[Y_{i}|{A=1}]}{\color{red}{\widehat {PS_i}}} - \frac{E[Y_{i}|{A=0}]}{\color{red}{1-\widehat {PS_i}}}\bigg]$$
 
+<<<<<<< Updated upstream
 Generating IPW estimator and calculate ACE by IPW equation:
+=======
+$$\widehat {PS}_i=\pi(X_{i})$$
+
+$$\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i}}{\color{red}{\pi(X_{i})}} - \frac{Y_{i}(1-A_{i})}{\color{red}{1-\pi(X_{i})}}\bigg]$$
+>>>>>>> Stashed changes
 
 ```{r, eval = FALSE}
 ipw_estimator <- function(data, model) {
@@ -268,9 +371,13 @@ nested_df %>%
   theme_bw()
 ```
 
+<<<<<<< Updated upstream
 The plot shows the data points are evenly spread around 10, and the mean of correct IPW estimate is 10, which is very close to the true ACE we set. 
 
 ## IPW could fail
+=======
+---
+>>>>>>> Stashed changes
 
 - If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail. We used the biased ipw results from the 'nested_df' dataset.
 
@@ -285,6 +392,7 @@ nested_df %>%
   geom_hline(yintercept = 10) +ylab("ACE estimate")+
   theme_bw()
 
+<<<<<<< Updated upstream
 ```
 
 The plot shows a obvious trend that all data points from biased IPW model shift upward, which the ACE for incorrect IPW model is higher than the ACE=10 we set in the beginning.  
@@ -294,6 +402,18 @@ a <- ggplot(nested_df, aes(x=simu_id, y=ipw, group=1)) +
   geom_boxplot()+
   geom_hline(yintercept=10, color='red')+ylab("ACE estimate")+
   ylim(7, 13.5)
+=======
+- If the model for A is incorrect, it would cause bias in the IPW, which cause IPW to fail.
+
+```{r, eval = FALSE}
+prop_score_model <- function(data) {
+  # OOPS! I forgot var_2
+  glm(treatment ~ var_1, data = data, family = 'binomial')
+}
+```
+
+---
+>>>>>>> Stashed changes
 
 b <- ggplot(nested_df, aes(x=simu_id, y=ipw_w, group=1))+
   geom_boxplot()+
@@ -318,7 +438,14 @@ outcome_model_estimator <- function(data) {
 }
 ```
 
+<<<<<<< Updated upstream
 ## REG Performance
+=======
+---
+
+class: center
+# Strategy 2: Performance - Simulation
+>>>>>>> Stashed changes
 
 ```{r, echo = FALSE}
 mean_model_estimator <- 
@@ -332,7 +459,28 @@ nested_df %>%
   theme_bw()
 ```
 
+<<<<<<< Updated upstream
 When outcome model is correctly modelled, this shows unbiased estimation of ACE.
+=======
+---
+
+# Outcome model could also fail
+
+- If the model for Y is incorrect, it would cause bias in the outcome model, which cause the mdoel to fail.
+
+```{r, eval = FALSE}
+mean_outcome_model <- function(data) {
+  # MISSING var_2??!?!
+  glm(outcome ~ var_1 + treatment, data = data)
+}
+```
+
+---
+
+# Combining Strategy 1 and 2
+
+--
+>>>>>>> Stashed changes
 
 ## REG could also fail
 
@@ -368,9 +516,13 @@ We also overestimated the true ACE (10) if our REG model is mis-specified.
 
 # Combining Strategy 1 and 2
 
+<<<<<<< Updated upstream
 - If the propensity score model is incorrect, strategy 1 will not work
 
 - If the outcome model is incorrect, strategy 2 will not work
+=======
+$$\hat{\delta}_{DR} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{\pi(X_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{1-\pi(X_{i})}\bigg]$$
+>>>>>>> Stashed changes
 
 - If you combine both approaches, you just need either one to work but not both
 

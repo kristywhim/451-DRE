@@ -455,8 +455,8 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
 
   <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
-  <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
-  <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
+  <link href="site_libs/font-awesome-6.2.1/css/all.min.css" rel="stylesheet"/>
+  <link href="site_libs/font-awesome-6.2.1/css/v4-shims.min.css" rel="stylesheet"/>
   <script src="site_libs/headroom-0.9.4/headroom.min.js"></script>
   <script src="site_libs/autocomplete-0.37.1/autocomplete.min.js"></script>
   <script src="site_libs/fuse-6.4.1/fuse.min.js"></script>
@@ -2189,6 +2189,19 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <span><span class='op'>}</span></span></code></pre>
 </div>
 </div>
+<<<<<<< Updated upstream
+=======
+<ul>
+<li>It is just a fancy name for logistic regression to sound smart at conferences!</li>
+</ul>
+<hr />
+<h1 id="strategy-1-ipw-estimator">Strategy 1: IPW Estimator</h1>
+<ul>
+<li>Similar to a difference of means but weights each observation inversely proportional to its probability of receiving a treatment</li>
+</ul>
+<p><span class="math display">\[\widehat {PS}_i=\pi(X_{i})\]</span></p>
+<p><span class="math display">\[\hat{\delta}_{IPW} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i}}{\color{red}{\pi(X_{i})}} - \frac{Y_{i}(1-A_{i})}{\color{red}{1-\pi(X_{i})}}\bigg]\]</span></p>
+>>>>>>> Stashed changes
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='co'># IPW estimator is wrong</span></span>
@@ -2243,8 +2256,45 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <span><span class='op'>}</span></span></code></pre>
 </div>
 </div>
+<<<<<<< Updated upstream
 <h2 id="dre-estimator">DRE estimator</h2>
 <p>Building DRE estimator using the combination of IPW model and REG model.</p>
+=======
+<hr />
+<h1 id="combining-strategy-1-and-2">Combining Strategy 1 and 2</h1>
+<p>–</p>
+<ul>
+<li>If the propensity score model is incorrect, strategy 1 will not work</li>
+</ul>
+<p>–</p>
+<ul>
+<li>If the outcome model is incorrect, strategy 2 will not work</li>
+</ul>
+<p>–</p>
+<ul>
+<li>If you combine both approaches, you just need either one to work but not both</li>
+</ul>
+<p>–</p>
+<ul>
+<li>As a data scientist you have 1 out of 2 chances to get the correct answer</li>
+</ul>
+<p>–</p>
+<ul>
+<li>This is called the doubly robustness property</li>
+</ul>
+<hr />
+<h1 id="this-could-also-fail-but-is-less-likely-to-do-so">This could also fail but is less likely to do so</h1>
+<hr />
+<h1 id="combining-strategy-1-and-2---doubly-robust-estimator">Combining Strategy 1 and 2 - Doubly Robust Estimator</h1>
+<p><span class="math display">\[\hat{\delta}_{DR} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{\pi(X_{i})} - \frac{Y_{i}(1-A_{i}) -\color{red}{(A_i-\pi(X_{i}))\mu(X_i, A_i)}}{1-\pi(X_{i})}\bigg]\]</span></p>
+<p>where <span class="math display">\[\mu(X, A) = \hat{\alpha}_0 + \hat{\alpha}_1 X_1 + \hat{\alpha}_2 X_2 +\hat{\delta} A\]</span></p>
+<ul>
+<li><p>The term in red is said to <em>augment</em> the IPW estimator</p></li>
+<li><p>It can be shown that this estimator will consistently estimate <span class="math inline">\(\delta = E[Y(A)]-E[Y(B)]\)</span> as long as either <span class="math inline">\(\pi(X_{i})\)</span> or <span class="math inline">\(\mu(X, A)\)</span> are correct</p></li>
+</ul>
+<hr />
+<h1 id="combining-strategy-1-and-2---doubly-robust-estimator-1">Combining Strategy 1 and 2 - Doubly Robust Estimator</h1>
+>>>>>>> Stashed changes
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>dr_estimator</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>prop_model</span>, <span class='va'>mean_model</span><span class='op'>)</span> <span class='op'>{</span></span>
