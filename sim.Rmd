@@ -31,6 +31,8 @@ library(ggplot2)
 library(knitr)
 library(gridExtra)
 library(cowplot)
+library(AIPW)
+library(SuperLearner)
 ```
 
 
@@ -47,7 +49,7 @@ simu_observational_data <- function(simu_id = 1, n_obs) {
   A      <- rbinom(n_obs, 1, prob_A)
  
   # We set the true causal effect of treatment A is 10
-  Y      <- 100 + X_1 + X_2 + 10*A + rnorm(n_obs)
+  Y      <- 100 + X_1 + 2*X_2 + 10*A + rnorm(n_obs)
  
   # summarize variables into a data frame
   data.frame(simu_id = simu_id, n_obs = n_obs,
@@ -55,6 +57,20 @@ simu_observational_data <- function(simu_id = 1, n_obs) {
              treatment = A, outcome = Y)  
 }
 ```
+
+```{r}
+n_simu <- 150
+n_obs <- 200
+
+set.seed(1)
+
+data <-
+  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>%
+  group_by(simu_id)
+
+sl.lib <- c("SL.mean","SL.glm")
+```
+
 
 ## IPW model
 
@@ -144,33 +160,9 @@ outcome_model_estimator_w <- function(data) {
 }
 ```
 
-## DRE estimator
+## Data Simulation
 
-Building DRE estimator using the combination of IPW model and REG model.
-
-```{r}
-dr_estimator <- function(data, prop_model, mean_model) {
-  data %>%
-    mutate(
-      # IPW model
-      prob = predict(prop_model, newdata = data, type = 'response'),
-      # REG model
-      pred = predict(mean_model, newdata = data, type = 'response'),
-      # Combination of IPW and REG model
-      augm = (treatment - prob)*pred
-    ) %>%
-    summarise(
-      # Calculate expected value for both treatment and non-treatment using IPW + REG.
-      EY0_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
-      EY1_dr = mean((outcome*treatment - augm) / prob)
-    ) %>%
-    # Compute ACE for DRE
-    mutate(dre = EY1_dr - EY0_dr)
-}
-```
-
-Then, we create the simulated dataset for all estimators and expected value from IPW, REG, and DRE models.
-
+We build the data with all different model specifications. 
 ```{r}
 n_simu <- 150
 n_obs <- 200
@@ -198,11 +190,9 @@ nested_df <-
     ipw_estimate   = map2(data, prop_model, ipw_estimator),
     # incorrect ipw estimation
     ipw_estimate_w = map2(data, prop_model_w, ipw_estimator_w),
-    # generate dre estimation
-    dr_estimate    = pmap(list(data, prop_model, mean_model), dr_estimator)
   ) %>%
   ungroup() %>%
-  unnest(c(model_estimate, model_estimate_w, ipw_estimate, ipw_estimate_w, dr_estimate))
+  unnest(c(model_estimate, model_estimate_w, ipw_estimate, ipw_estimate_w))
 ```
 
 Now, we have five models: IPW (both correct and incorrect), REG (both correct and incorrect), and DRE.
@@ -384,19 +374,19 @@ $$\hat{\delta}_{DRE} = \frac{1}{n}\sum_{i=1}^{n}\bigg[\frac{Y_{i}A_{i} -\color{r
 
 where $\pi(Z_i)=\widehat {PS_i}$ (propensity score from IPW), and $\mu(Z_i, A_i)=E[Y|A=1,Z]$ (this is the part of outcome regression model in DRE model). The term in red is said to *augment* the IPW estimator.
 
-
 ### When IPW and REG both correct
 
-```{r, echo = FALSE}
-mean_dre_estimator <-
-  mean(nested_df$dre)
-
-nested_df %>%
-  ggplot(aes(x = simu_id, y = dre)) +
-  ggtitle(paste('The mean of the DRE estimate (both correct) is ', round(mean_dre_estimator, 2))) +
-  geom_point(color = 'red') +
-  geom_hline(yintercept = 10) +ylab("ACE estimate")+
-  theme_bw()
+```{r}
+AIPW_00 <- AIPW$new(Y= data$outcome, 
+                    A= data$treatment,
+                    W= subset(data,select=c(var_1,var_2)), # Covariates for both IPW and REG models
+                    Q.SL.library = sl.lib, # Algorithms used for the outcome model (Q).
+                    g.SL.library = sl.lib, # Algorithms used for the exposure model (g).
+                    k_split = 10, # Number of folds for splitting
+                    verbose=FALSE)
+AIPW_00$fit()
+dre_00 <- AIPW_00$estimates$risk_A1[1] - AIPW_00$estimates$risk_A0[1] # Calculate ACE
+dre_00
 ```
 
 This is fine - we have a very unbiased estimation.
@@ -409,159 +399,68 @@ Let's analyze DRE's performance under following settings:
 
 Let's explore what happens to DRE when something goes wrong!
 
-
-```{r, echo = FALSE}
-# DRE: IPW incorrect
-set.seed(1)
-nested_pe_df <-
-  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>%
-  group_by(simu_id) %>%
-  nest() %>%
-  mutate(
-    prop_model_w     = map(data, prop_score_model_w),
-    mean_model     = map(data, mean_outcome_model),
-    model_estimate = map(data, outcome_model_estimator),
-    ipw_estimate_w   = map2(data, prop_model_w, ipw_estimator_w),
-    dr_estimate    = pmap(list(data, prop_model_w, mean_model), dr_estimator)
-  ) %>%
-  ungroup() %>%
-  unnest(c(model_estimate, ipw_estimate_w, dr_estimate))
-
+```{r}
+AIPW_01 <- AIPW$new(Y= data$outcome,
+                    A= data$treatment,
+                    W.Q= subset(data,select=c(var_1,var_2)), # Covariates for the REG model.
+                    W.g= subset(data,select=var_1), # Covariates for the IPW model.
+                    Q.SL.library = sl.lib,
+                    g.SL.library = sl.lib,
+                    k_split = 10,
+                    verbose=FALSE)
+AIPW_01$fit()
+dre_01 <- AIPW_01$estimates$risk_A1[1] - AIPW_01$estimates$risk_A0[1]
+dre_01
 ```
 
-
-```{r, echo = FALSE}
-nested_pe_df %>%
-  ggplot(aes(x = simu_id, y = dre)) +
-  geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate (IPW misspecified) is ', round(mean(nested_pe_df$dre), 2))) +
-  geom_hline(yintercept = 10) +ylab("ACE estimate")+
-  theme_bw()
-```
-
-The mean of estimates are above 10, indicating an overestimate of ACE. But this is still acceptable considering IPW is wrongly assigned - this is not too bad.
+The mean of estimates are around 10. This indicates that this estimator is unbiased when IPW is misspecified.
 
 ---
 
 ### When REG is incorrect, IPW is correct
 
-
-```{r, echo = FALSE}
-# REG incorrect, IPW correct
-set.seed(1)
-
-nested_om_df <-
-  purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>%
-  group_by(simu_id) %>%
-  nest() %>%
-  mutate(
-    prop_model     = map(data, prop_score_model),
-    mean_model_w     = map(data, mean_outcome_model_w),
-    model_estimate_w = map(data, outcome_model_estimator_w),
-    ipw_estimate   = map2(data, prop_model, ipw_estimator),
-    dr_estimate    = pmap(list(data, prop_model, mean_model_w), dr_estimator)
-  ) %>%
-  ungroup() %>%
-  unnest(c(model_estimate_w, ipw_estimate,dr_estimate))
+```{r}
+AIPW_10 <- AIPW$new(Y= data$outcome,
+                    A= data$treatment,
+                    W.Q= subset(data,select=var_1), 
+                    W.g= subset(data,select=c(var_1,var_2)),
+                    Q.SL.library = sl.lib,
+                    g.SL.library = sl.lib,
+                    k_split = 10,
+                    verbose=FALSE)
+AIPW_10$fit()
+dre_10 <- AIPW_10$estimates$risk_A1[1] - AIPW_10$estimates$risk_A0[1]
+dre_10
 ```
 
-```{r, echo = FALSE}
-nested_om_df %>%
-  ggplot(aes(x = simu_id, y = dre)) +
-  geom_point(color = 'red') +
-  ggtitle(paste('The mean of the DRE estimate (REG misspecified) is ', round(mean(nested_om_df$dre), 2))) +
-  geom_hline(yintercept = 10) +ylab("ACE estimate")+
-  theme_bw()
-```
-
-
-Although it performed worse than the first scenario in DRE (when both REG and IPW are correctly specified), the mean of this estimation is still fair and we can say it maintains robustness.
+The mean of estimates are also around 10. This indicates that this estimator is unbiased when REG is wrongly modeled. 
 
 ### When both REG and IPW are incorrect - DRE fails!!
 
 Let’s look at what happens to DRE estimation when both models are incorrectly identified. From previous slides, we learned how robust DRE is - its unbiasedness holds even if one of the models is incorrect, but this is not the case here!
 
-
-```{r, include=F}
-# dr_estimator_w <- function(data, prop_model_w, mean_model_w) {
-#   data %>%
-#     mutate(
-#       prob = predict(prop_model_w, newdata = data, type = 'response'),
-#       pred = predict(mean_model_w, newdata = data, type = 'response'),
-#       augm = (treatment - prob)*pred
-#     ) %>%
-#     summarise(
-#       EY0_dr = mean((outcome*(1 - treatment) - augm) / (1 - prob)),
-#       EY1_dr = mean((outcome*treatment - augm) / prob)
-#     ) %>%
-#     mutate(dre_w = EY1_dr - EY0_dr)
-# }
-```
-
-```{r, echo = FALSE}
-# Both wrong
-# set.seed(1)
-# nested_bw_df <-
-#   purrr::map2_dfr(1:n_simu, rep(n_obs, n_simu), simu_observational_data) %>%
-#   group_by(simu_id) %>%
-#   nest() %>%
-#   mutate(
-#     prop_model_w     = map(data, prop_score_model_w),
-#     mean_model_w   = map(data, mean_outcome_model_w),
-#     model_estimate_w = map(data, outcome_model_estimator_w),
-#     ipw_estimate_w   = map2(data, prop_model_w, ipw_estimator_w),
-#     dr_estimate_w    = pmap(list(data, prop_model_w, mean_model_w), dr_estimator_w)
-#   ) %>%
-#   ungroup() %>%
-#   unnest(c(model_estimate_w, ipw_estimate_w, dr_estimate_w))
-```
-
-```{r, echo = FALSE}
-# nested_bw_df %>%
-#   ggplot(aes(x = simu_id, y = dre_w)) +
-#   geom_point(color = 'red') +
-#   ggtitle(paste('The mean of the DRE estimate (both incorrect) is ', round(mean(nested_bw_df$dre_w), 2))) +
-#   geom_hline(yintercept = 10) +ylab("ACE estimate")+
-#   theme_bw()
-```
-
 ```{r}
-summary(nested_df$dre)
-summary(nested_pe_df$dre) #IPW wrong
-summary(nested_om_df$dre)
-# summary(nested_bw_df$dre_w)
+AIPW_11 <- AIPW$new(Y= data$outcome,
+                    A= data$treatment,
+                    W.Q= subset(data,select=var_1), 
+                    W.g= subset(data,select=var_1),
+                    Q.SL.library = sl.lib,
+                    g.SL.library = sl.lib,
+                    k_split = 10,
+                    verbose=FALSE)
+AIPW_11$fit()
+dre_11 <- AIPW_11$estimates$risk_A1[1] - AIPW_11$estimates$risk_A0[1]
+dre_11
 ```
 
+The mean of estimates are above 10 (10.46). This indicates that this estimator is biased when both REG and IPW are wrongly modeled.
 
-```{r, echo=F}
+**Looking at them together!**
 
-h <- ggplot(nested_df, aes(x=simu_id, y=dre, group=1))+
-  geom_boxplot()+
-  geom_hline(yintercept = 10, color='red')+
-  ylim(7.5,13.5)+
-  theme_bw()
-
-e <- ggplot(nested_pe_df, aes(x=simu_id, y=dre, group=1)) +
-  geom_boxplot()+
-  geom_hline(yintercept = 10, color='red')+
-  ylim(7.5,13.5)+
-  theme_bw()
-f <- ggplot(nested_om_df, aes(x=simu_id, y=dre, group=1))+
-  geom_boxplot()+
-  geom_hline(yintercept = 10, color='red')+
-  ylim(7.5,13.5)+
-  theme_bw()
-# g <- ggplot(nested_bw_df, aes(x=simu_id, y=dre_w, group=1))+
-#   geom_boxplot()+
-#   geom_hline(yintercept = 10, color='red')+
-#   ylim(7.5,13.5)+
-#   theme_bw()
-
-plot_grid(h, e, f, labels=c("Both Correct", "Incorrect IPW", "Incorrect REG"), ncol = 3, nrow = 1)
+```{r,echo=FALSE}
+c(dre_00,dre_01,dre_10,dre_11)
 ```
 
-
-This boxplot shows the summary of three DRE estimation in the three scenario we simulated. When both are incorrect, the mean of this estimation is far away from 10 (the true ACE, indicated by the red line).
 
 ---
 

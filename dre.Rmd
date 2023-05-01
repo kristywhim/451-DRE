@@ -63,8 +63,7 @@ We have talked about how DRE is robust and unbiased when either REG and IPW mode
 
 ## When IPW is misspecified, but REG is correct
 
-The first situation is that when we have IPW model
-misspecified:
+The first situation is that when we have IPW model misspecified:
 
 $$
 \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S}_{i}}\right) \neq E\left[Y^{a=1}\right]\\
@@ -95,14 +94,18 @@ $$
 ## When REG is misspecified, but IPW is correct
 
 The second situation is that when we have REG
-model misspecified: $$
+model misspecified: 
+$$
 \frac{1}{n} \sum_{i=1}^{n} \hat{Y}_{i}^{a} \neq E\left[Y^{a}\right]
-$$ But our IPW model is correct: $$
+$$ 
+But our IPW model is correct: 
+$$
 \begin{aligned}
 & \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S_i}}\right)=E\left[Y^{a=1}\right] \\
 & \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=0\right]}{1-\widehat{P S}_{i}}\right)=E\left[Y^{a=0}\right] \\
 \end{aligned}
-$$ First, let's rearrange DRE's formula a bit:
+$$ 
+First, let's rearrange DRE's formula a bit:
 
 $$
 \scriptsize{
@@ -116,7 +119,8 @@ $$
 \end{aligned}}
 $$
 
-Then the true ACE becomes: $$
+Then the true ACE becomes: 
+$$
 \scriptsize{\begin{aligned}
 E\left[\widehat{D R E_{a=1}}-\widehat{D R E_{a=0}}\right]&=E\left[\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i} Y_{i}}{\widehat{P S_{i}}}-\hat{Y}_{i}^{a=1}\left(\frac{A_{i}-\widehat{P S}_{i}}{\widehat{P S}_{i}}\right)\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right) Y_{i}}{1-\widehat{P S_{i}}}-\hat{Y}_{i}^{a=0}\left(\frac{\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)}{1-\widehat{P S} _{i}}\right)\right)\right] \\
 & =\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{A_{i} Y_{i}}{\widehat{P S_{i}}}-\hat{Y}_{i}^{a=1}\left(\frac{A_{i}-\widehat{P S_{i}}}{\widehat{P S_{i}}}\right)\right)\right]-\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right) Y_{i}}{1-\widehat{P S}_{i}}-\hat{Y}_{i}^{a=0}\left(\frac{\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)}{1-\widehat{P S_{i}}}\right)\right)\right] \\
@@ -130,10 +134,4 @@ E\left[\widehat{D R E_{a=1}}-\widehat{D R E_{a=0}}\right]&=E\left[\frac{1}{n} \s
 \end{aligned}}
 $$
 
-In either case, we prove that DRE's unbiasedness
-in estimating the true average causal effects
-holds even though either of IPW/REG has been
-wrongly specified (but the other has to be
-correctly modeled). But it fails to work if both
-inverse-probability weighting model (IPW) and
-outcome regression model (REG) are incorrect.
+In either case, we prove that DRE's unbiasedness in estimating the true average causal effects holds even though either of IPW/REG has been wrongly specified (but the other has to be correctly modeled). But it fails to work if both inverse-probability weighting model (IPW) and outcome regression model (REG) are incorrect.
