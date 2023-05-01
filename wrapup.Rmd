@@ -16,3 +16,4 @@ Thank you for reading and having the interest on our project!
 > 3.  Hidalgo, Sebastian Jose Teran. "Seborinos/Doubly_robust_nyr_2020." GitHub, 16 Aug. 2020, github.com/Seborinos/doubly_robust_nyr_2020. Accessed 28 Apr. 2023.
 > 4.  Rothman, Andrew. "Doubly Robust Estimators for Causal Inference in Statistical Estimation." Medium, 27 Dec. 2020, towardsdatascience.com/doubly-robust-estimators-for-causal-inference-in-statistical-estimation-3c00847e9db. Accessed 28 Apr. 2023.
 > 5.  Lunceford, Jared K., and Marie Davidian. "Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study." Statistics in medicine 23.19 (2004): 2937-2960.
+> 6.  Zhong, Yongqi, et al. “AIPW: Augmented Inverse Probability Weighting.” R-Packages, 11 June 2021, cran.r-project.org/package=AIPW. Accessed 1 May 2023.

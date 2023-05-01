@@ -2163,8 +2163,7 @@ E\left[\widehat{D R E}_{a=1}-\widehat{D R E}_{a=0}\right] &amp; =E\left[Y^{a=1}\
 1. when IPW is incorrect
 2. when REG is incorrect.</p>
 <h2 id="when-ipw-is-misspecified-but-reg-is-correct">When IPW is misspecified, but REG is correct</h2>
-<p>The first situation is that when we have IPW model
-misspecified:</p>
+<p>The first situation is that when we have IPW model misspecified:</p>
 <p><span class="math display">\[
 \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S}_{i}}\right) \neq E\left[Y^{a=1}\right]\\
 \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=0\right]}{1-\widehat{P S}_{i}}\right) \neq E\left[Y^{a=0}\right]
@@ -2188,14 +2187,18 @@ E\left[\widehat{\left[D R E_{a=1}\right.}-\widehat{\left. D R E_{a=0}\right]}\ri
 \]</span></p>
 <h2 id="when-reg-is-misspecified-but-ipw-is-correct">When REG is misspecified, but IPW is correct</h2>
 <p>The second situation is that when we have REG
-model misspecified: <span class="math display">\[
+model misspecified:
+<span class="math display">\[
 \frac{1}{n} \sum_{i=1}^{n} \hat{Y}_{i}^{a} \neq E\left[Y^{a}\right]
-\]</span> But our IPW model is correct: <span class="math display">\[
+\]</span>
+But our IPW model is correct:
+<span class="math display">\[
 \begin{aligned}
 &amp; \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=1\right]}{\widehat{P S_i}}\right)=E\left[Y^{a=1}\right] \\
 &amp; \frac{1}{n} \sum_{i=1}^{n}\left(\frac{E\left[Y_{i} \mid A=0\right]}{1-\widehat{P S}_{i}}\right)=E\left[Y^{a=0}\right] \\
 \end{aligned}
-\]</span> First, let’s rearrange DRE’s formula a bit:</p>
+\]</span>
+First, let’s rearrange DRE’s formula a bit:</p>
 <p><span class="math display">\[
 \scriptsize{
 \begin{aligned}
@@ -2207,7 +2210,8 @@ model misspecified: <span class="math display">\[
 &amp;
 \end{aligned}}
 \]</span></p>
-<p>Then the true ACE becomes: <span class="math display">\[
+<p>Then the true ACE becomes:
+<span class="math display">\[
 \scriptsize{\begin{aligned}
 E\left[\widehat{D R E_{a=1}}-\widehat{D R E_{a=0}}\right]&amp;=E\left[\frac{1}{n} \sum_{i=1}^{n}\left(\frac{A_{i} Y_{i}}{\widehat{P S_{i}}}-\hat{Y}_{i}^{a=1}\left(\frac{A_{i}-\widehat{P S}_{i}}{\widehat{P S}_{i}}\right)\right)-\frac{1}{n} \sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right) Y_{i}}{1-\widehat{P S_{i}}}-\hat{Y}_{i}^{a=0}\left(\frac{\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)}{1-\widehat{P S} _{i}}\right)\right)\right] \\
 &amp; =\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{A_{i} Y_{i}}{\widehat{P S_{i}}}-\hat{Y}_{i}^{a=1}\left(\frac{A_{i}-\widehat{P S_{i}}}{\widehat{P S_{i}}}\right)\right)\right]-\frac{1}{n} E\left[\sum_{i=1}^{n}\left(\frac{\left(1-A_{i}\right) Y_{i}}{1-\widehat{P S}_{i}}-\hat{Y}_{i}^{a=0}\left(\frac{\left(1-A_{i}\right)-\left(1-\widehat{P S_{i}}\right)}{1-\widehat{P S_{i}}}\right)\right)\right] \\
@@ -2220,13 +2224,7 @@ E\left[\widehat{D R E_{a=1}}-\widehat{D R E_{a=0}}\right]&amp;=E\left[\frac{1}{n
 &amp; =E\left[Y^{a=1}\right]-E\left[Y^{a=0}\right]
 \end{aligned}}
 \]</span></p>
-<p>In either case, we prove that DRE’s unbiasedness
-in estimating the true average causal effects
-holds even though either of IPW/REG has been
-wrongly specified (but the other has to be
-correctly modeled). But it fails to work if both
-inverse-probability weighting model (IPW) and
-outcome regression model (REG) are incorrect.</p>
+<p>In either case, we prove that DRE’s unbiasedness in estimating the true average causal effects holds even though either of IPW/REG has been wrongly specified (but the other has to be correctly modeled). But it fails to work if both inverse-probability weighting model (IPW) and outcome regression model (REG) are incorrect.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->

@@ -2259,7 +2259,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </div>
 </div>
 <h2 id="data-simulation">Data Simulation</h2>
-We build the data with all different model specifications.
+<p>We build the data with all different model specifications.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>n_simu</span> <span class='op'>&lt;-</span> <span class='fl'>150</span></span>
@@ -2399,10 +2399,13 @@ We build the data with all different model specifications.
 <span>                    k_split <span class='op'>=</span> <span class='fl'>10</span>, <span class='co'># Number of folds for splitting</span></span>
 <span>                    verbose<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span></span>
 <span><span class='va'>AIPW_00</span><span class='op'>$</span><span class='fu'>fit</span><span class='op'>(</span><span class='op'>)</span></span>
+<span><span class='co'># Estimate the average causal effects</span></span>
+<span><span class='va'>AIPW_00</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span>g.bound <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span></span>
 <span><span class='va'>dre_00</span> <span class='op'>&lt;-</span> <span class='va'>AIPW_00</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A1</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>-</span> <span class='va'>AIPW_00</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A0</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='co'># Calculate ACE</span></span>
 <span><span class='va'>dre_00</span></span></code></pre>
 </div>
-<pre><code>integer(0)</code></pre>
+<pre><code>Estimate 
+10.00317 </code></pre>
 </div>
 <p>This is fine - we have a very unbiased estimation.</p>
 <hr />
@@ -2420,10 +2423,12 @@ We build the data with all different model specifications.
 <span>                    k_split <span class='op'>=</span> <span class='fl'>10</span>,</span>
 <span>                    verbose<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span></span>
 <span><span class='va'>AIPW_01</span><span class='op'>$</span><span class='fu'>fit</span><span class='op'>(</span><span class='op'>)</span></span>
+<span><span class='va'>AIPW_01</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span>g.bound <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span></span>
 <span><span class='va'>dre_01</span> <span class='op'>&lt;-</span> <span class='va'>AIPW_01</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A1</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>-</span> <span class='va'>AIPW_01</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A0</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span></span>
 <span><span class='va'>dre_01</span></span></code></pre>
 </div>
-<pre><code>integer(0)</code></pre>
+<pre><code>Estimate 
+ 10.0033 </code></pre>
 </div>
 <p>The mean of estimates are around 10. This indicates that this estimator is unbiased when IPW is misspecified.</p>
 <hr />
@@ -2439,10 +2444,12 @@ We build the data with all different model specifications.
 <span>                    k_split <span class='op'>=</span> <span class='fl'>10</span>,</span>
 <span>                    verbose<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span></span>
 <span><span class='va'>AIPW_10</span><span class='op'>$</span><span class='fu'>fit</span><span class='op'>(</span><span class='op'>)</span></span>
+<span><span class='va'>AIPW_10</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span>g.bound <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span></span>
 <span><span class='va'>dre_10</span> <span class='op'>&lt;-</span> <span class='va'>AIPW_10</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A1</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>-</span> <span class='va'>AIPW_10</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A0</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span></span>
 <span><span class='va'>dre_10</span></span></code></pre>
 </div>
-<pre><code>integer(0)</code></pre>
+<pre><code>Estimate 
+10.00384 </code></pre>
 </div>
 <p>The mean of estimates are also around 10. This indicates that this estimator is unbiased when REG is wrongly modeled.</p>
 <h3 id="when-both-reg-and-ipw-are-incorrect---dre-fails">When both REG and IPW are incorrect - DRE fails!!</h3>
@@ -2458,15 +2465,21 @@ We build the data with all different model specifications.
 <span>                    k_split <span class='op'>=</span> <span class='fl'>10</span>,</span>
 <span>                    verbose<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span></span>
 <span><span class='va'>AIPW_11</span><span class='op'>$</span><span class='fu'>fit</span><span class='op'>(</span><span class='op'>)</span></span>
+<span><span class='va'>AIPW_11</span><span class='op'>$</span><span class='fu'>summary</span><span class='op'>(</span>g.bound <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span></span>
 <span><span class='va'>dre_11</span> <span class='op'>&lt;-</span> <span class='va'>AIPW_11</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A1</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>-</span> <span class='va'>AIPW_11</span><span class='op'>$</span><span class='va'>estimates</span><span class='op'>$</span><span class='va'>risk_A0</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span></span>
 <span><span class='va'>dre_11</span></span></code></pre>
 </div>
-<pre><code>integer(0)</code></pre>
+<pre><code>Estimate 
+ 10.4585 </code></pre>
 </div>
 <p>The mean of estimates are above 10 (10.46). This indicates that this estimator is biased when both REG and IPW are wrongly modeled.</p>
 <p><strong>Looking at them together!</strong></p>
 <div class="layout-chunk" data-layout="l-body">
-<pre><code>integer(0)</code></pre>
+<pre><code>               ACE estimates
+Both Correct        10.00317
+IPW Incorrect       10.00330
+REG Incorrect       10.00384
+Both Incorrect      10.45850</code></pre>
 </div>
 <hr />
 <h1 id="conclusion">Conclusion</h1>

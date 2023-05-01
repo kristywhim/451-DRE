@@ -162,7 +162,8 @@ outcome_model_estimator_w <- function(data) {
 
 ## Data Simulation
 
-We build the data with all different model specifications. 
+We build the data with all different model specifications.
+
 ```{r}
 n_simu <- 150
 n_obs <- 200
@@ -385,6 +386,8 @@ AIPW_00 <- AIPW$new(Y= data$outcome,
                     k_split = 10, # Number of folds for splitting
                     verbose=FALSE)
 AIPW_00$fit()
+# Estimate the average causal effects
+AIPW_00$summary(g.bound = 0.25)
 dre_00 <- AIPW_00$estimates$risk_A1[1] - AIPW_00$estimates$risk_A0[1] # Calculate ACE
 dre_00
 ```
@@ -409,6 +412,7 @@ AIPW_01 <- AIPW$new(Y= data$outcome,
                     k_split = 10,
                     verbose=FALSE)
 AIPW_01$fit()
+AIPW_01$summary(g.bound = 0.25)
 dre_01 <- AIPW_01$estimates$risk_A1[1] - AIPW_01$estimates$risk_A0[1]
 dre_01
 ```
@@ -429,6 +433,7 @@ AIPW_10 <- AIPW$new(Y= data$outcome,
                     k_split = 10,
                     verbose=FALSE)
 AIPW_10$fit()
+AIPW_10$summary(g.bound = 0.25)
 dre_10 <- AIPW_10$estimates$risk_A1[1] - AIPW_10$estimates$risk_A0[1]
 dre_10
 ```
@@ -449,6 +454,7 @@ AIPW_11 <- AIPW$new(Y= data$outcome,
                     k_split = 10,
                     verbose=FALSE)
 AIPW_11$fit()
+AIPW_11$summary(g.bound = 0.25)
 dre_11 <- AIPW_11$estimates$risk_A1[1] - AIPW_11$estimates$risk_A0[1]
 dre_11
 ```
@@ -458,7 +464,11 @@ The mean of estimates are above 10 (10.46). This indicates that this estimator i
 **Looking at them together!**
 
 ```{r,echo=FALSE}
-c(dre_00,dre_01,dre_10,dre_11)
+df <- data.frame(c(dre_00,dre_01,dre_10,dre_11))
+
+rownames(df)<- c("Both Correct","IPW Incorrect","REG Incorrect","Both Incorrect")
+colnames(df) <- "ACE estimates"
+df
 ```
 
 
